@@ -167,6 +167,9 @@ class Expr:
     def sqrt(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.sqrt)))
 
+    def len(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(_size)))
+
     def min(self, axis=None) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.min, axis=axis)))
 
@@ -182,8 +185,8 @@ class Expr:
     def std(self, axis=None, ddof: int = 0) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.std, axis=axis, ddof=ddof)))
 
-    def var(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.var, axis=axis)))
+    def var(self, axis=None, ddof: int = 0) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.var, axis=axis, ddof=ddof)))
 
     def median(self, axis=None) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.median, axis=axis)))
@@ -222,7 +225,7 @@ class Expr:
 
     ##### the "isXX" methods ########################################################
     def isin(self, values) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.isin, values=values)))
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isin, values)))
 
     def isnan(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isnan)))
@@ -275,6 +278,10 @@ def _concat(*arr):
 
 def _shape(arr: np.ndarray):
     return np.array(arr.shape, dtype=int)
+
+
+def _size(arr: np.ndarray):
+    return np.int64(arr.size)
 
 
 def _to_unit_expr(value) -> _uexp.UnitExpr:

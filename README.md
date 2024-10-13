@@ -2,6 +2,7 @@
 
 [![PyPI - Version](https://img.shields.io/pypi/v/structured-array.svg)](https://pypi.org/project/structured-array)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/structured-array.svg)](https://pypi.org/project/structured-array)
+[![codecov](https://codecov.io/gh/hanjinliu/structured-array/graph/badge.svg?token=vaPM3dusOW)](https://codecov.io/gh/hanjinliu/structured-array)
 
 Efficient manipulation of the numpy structured arrays.
 

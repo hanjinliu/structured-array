@@ -1,3 +1,4 @@
+import pytest
 import structured_array as st
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -71,3 +72,32 @@ def test_with_columns_from_multiple():
         df.with_columns((st.col("a") + st.col("b")).alias("c")),
         st.array({"a": [1, 2, 3], "b": [4, 5, 6], "c": [5, 7, 9]}),
     )
+
+
+def test_misc_methods():
+    df = st.array({"a": [1, 2, 3], "b": [4, 5, 6]})
+    assert df.select(st.col("a").mean())[0, 0] == pytest.approx(2.0)
+    assert df.select(st.col("a").std(ddof=0))[0, 0] == pytest.approx(
+        np.std([1, 2, 3], ddof=0)
+    )
+    assert df.select(st.col("a").var(ddof=0))[0, 0] == pytest.approx(
+        np.var([1, 2, 3], ddof=0)
+    )
+    assert df.select(st.col("a").sum())[0, 0] == 6
+    assert df.select(st.col("a").min())[0, 0] == 1
+    assert df.select(st.col("a").max())[0, 0] == 3
+    assert df.select(st.col("a").len())[0, 0] == 3
+    assert df.select(st.col("a").median())[0, 0] == 2
+    assert df.select(st.col("a").percentile(50))[0, 0] == 2
+    assert df.select(st.col("a").quantile(0.5))[0, 0] == 2
+    assert df.select(st.col("a").lt(10).all())[0, 0] == True
+    assert df.select(st.col("a").lt(2).any())[0, 0] == True
+    assert df.select(st.col("a").argmin())[0, 0] == 0
+    assert df.select(st.col("a").argmax())[0, 0] == 2
+    assert df.select(st.col("a").ceil()).to_dict(asarray=False) == {"a": [1, 2, 3]}
+    assert df.select(st.col("a").floor()).to_dict(asarray=False) == {"a": [1, 2, 3]}
+    assert df.select(st.col("a").round()).to_dict(asarray=False) == {"a": [1, 2, 3]}
+    assert df.select(st.col("a").clip(2, 3)).to_dict(asarray=False) == {"a": [2, 2, 3]}
+    assert df.select(st.col("a").isin([1, 3])).to_dict(asarray=False) == {
+        "a": [True, False, True]
+    }
