@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
-from typing import Mapping, Sequence, TYPE_CHECKING, cast
+from typing import Sequence, TYPE_CHECKING, cast
 import numpy as np
 from structured_array._normalize import dtype_kind_to_dtype
 from structured_array.array import StructuredArray
@@ -28,20 +28,35 @@ def arange(start=None, stop=None, step=1, dtype=None) -> Expr:
     return Expr(ArangeExpr(start, stop, step, dtype))
 
 
-def array(arr, schema: SchemaType | None = None) -> StructuredArray:
-    """Construct a StructuredArray from any object."""
-    if schema is None:
+def _schema_to_dict(s: SchemaType) -> dict[str, np.dtype]:
+    if s is None:
         schema = {}
-    elif not isinstance(schema, Mapping):
-        schema = dict(schema)
+    else:
+        schema = dict(s)
+    return schema
+
+
+def array(
+    arr,
+    schema: SchemaType | None = None,
+    schema_overrides: SchemaType | None = None,
+) -> StructuredArray:
+    """Construct a StructuredArray from any object."""
+    schema = _schema_to_dict(schema)
+    schema_overrides = _schema_to_dict(schema_overrides)
+    schema_overrides.update(schema)
     if isinstance(arr, dict):
+        if schema.keys() - arr.keys():
+            raise ValueError("Schema keys must be a subset of input keys")
         series = []
         dtypes = []
         heights: set[int] = set()
         for name, data in arr.items():
             data = np.asarray(data)
             series.append(data)
-            dtypes.append((name, schema.get(name, data.dtype), data.shape[1:]))
+            dtypes.append(
+                (name, schema_overrides.get(name, data.dtype), data.shape[1:])
+            )
             heights.add(data.shape[0])
         if len(heights) > 1:
             raise ValueError("All arrays must have the same number of rows")
@@ -53,11 +68,13 @@ def array(arr, schema: SchemaType | None = None) -> StructuredArray:
         return StructuredArray(out)
     elif hasattr(arr, "__dataframe__"):
         df = cast("DataFrame", arr.__dataframe__())
+        if set(schema.keys()) - set(df.column_names()):
+            raise ValueError("Schema keys must be a subset of input keys")
         nrows = df.num_rows()
         dtypes = [
             (
                 name,
-                schema.get(
+                schema_overrides.get(
                     name, dtype_kind_to_dtype(df.get_column_by_name(name).dtype)
                 ),
             )

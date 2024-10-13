@@ -62,9 +62,9 @@ class StructuredArray:
         return list(self.schema.values())
 
     @property
-    def shape(self) -> tuple[int, ...]:
+    def shape(self) -> tuple[int, int]:
         """Shape of the structured array."""
-        return self._arr.shape
+        return (len(self._arr), len(self.columns))
 
     @property
     def schema(self) -> MappingProxyType[str, np.dtype]:
@@ -95,7 +95,7 @@ class StructuredArray:
             dtype: np.dtype = self._arr.dtype[name]
             new_name = mapping.get(name, name)
             dtypes.append((new_name, dtype.base, dtype.shape))
-        new_arr = np.empty(self.shape, dtype=dtypes)
+        new_arr = np.empty(len(self), dtype=dtypes)
         for name in self.columns:
             new_name = mapping.get(name, name)
             arr = self._arr[name]
@@ -303,6 +303,9 @@ class StructuredArray:
 
     def __len__(self) -> int:
         return len(self._arr)
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.columns
 
     def _new_structured_array(
         self, arrs: list[np.ndarray], allow_duplicates: bool = False

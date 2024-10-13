@@ -64,6 +64,14 @@ def test_getitem():
     assert df[1:3, 1:2].to_dict(asarray=False) == {"b": [5, 6]}
 
 
+def test_misc():
+    df = st.array({"a": [1, 2, 3], "b": [4, 5, 6]})
+    assert "a" in df
+    assert "c" not in df
+    assert len(df) == 3
+    assert df.shape == (3, 2)
+
+
 def test_rename():
     df = st.array({"a": [1, 2, 3], "b": [4, 5, 6]})
     assert df.rename({"a": "A"}).to_dict(asarray=False) == {

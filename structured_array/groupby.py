@@ -41,7 +41,7 @@ class GroupBy:
         arrays: list[np.ndarray] = []
         for sl, sub in self:
             sub_processed = sub.select(exprs)
-            height = sub_processed.shape[0]
+            height = len(sub_processed)
             dtype_all = sl.dtype.descr + sub_processed._arr.dtype.descr
             out = np.empty(height, dtype=dtype_all)
             out[list(sl.dtype.names)] = sl

@@ -106,3 +106,11 @@ def test_misc_methods():
     assert df.select(st.col("a").isin([1, 3])).to_dict(asarray=False) == {
         "a": [True, False, True]
     }
+
+
+def test_unique():
+    df = st.array(
+        {"a": [1, 2, 3, 1, 2, 3], "b": [[4, 1], [5, 4], [6, 3], [4, 1], [5, 4], [6, 2]]}
+    )
+    assert df.select(st.col("a").unique()).to_dict(asarray=False) == {"a": [1, 2, 3]}
+    assert df.select(st.col("b").unique(axis=0))["b"].shape == (4, 2)

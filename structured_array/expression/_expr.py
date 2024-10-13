@@ -83,6 +83,9 @@ class Expr:
     __gt__ = gt
     __ge__ = ge
 
+    def unique(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.unique, axis=axis)))
+
     def sin(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.sin)))
 
@@ -167,9 +170,21 @@ class Expr:
     def sqrt(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.sqrt)))
 
-    def len(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(_size)))
+    def ceil(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.ceil)))
 
+    def floor(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.floor)))
+
+    def round(self, decimals=0) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.round, decimals=decimals)))
+
+    def clip(self, a_min, a_max) -> Expr:
+        return Expr(
+            self._op.compose(_uexp.UfuncExpr(np.clip, a_min=a_min, a_max=a_max))
+        )
+
+    ##### Aggregation methods ########################################################
     def min(self, axis=None) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.min, axis=axis)))
 
@@ -209,19 +224,8 @@ class Expr:
     def argmax(self, axis=None) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.argmax, axis=axis)))
 
-    def ceil(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.ceil)))
-
-    def floor(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.floor)))
-
-    def round(self, decimals=0) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.round, decimals=decimals)))
-
-    def clip(self, a_min, a_max) -> Expr:
-        return Expr(
-            self._op.compose(_uexp.UfuncExpr(np.clip, a_min=a_min, a_max=a_max))
-        )
+    def len(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(_size)))
 
     ##### the "isXX" methods ########################################################
     def isin(self, values) -> Expr:
