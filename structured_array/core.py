@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import ctypes
 from pathlib import Path
-from typing import Sequence, TYPE_CHECKING, cast
+from typing import Mapping, Sequence, TYPE_CHECKING, cast
 import numpy as np
 from structured_array._normalize import dtype_kind_to_dtype
 from structured_array.array import StructuredArray
 from structured_array.expression import Expr, SelectExpr, LitExpr, ArangeExpr
 
 if TYPE_CHECKING:
+    from structured_array.typing import SchemaType
     from pandas.core.interchange.dataframe_protocol import DataFrame, Column
 
 
@@ -19,6 +20,7 @@ def col(name: str | Sequence[str], *more_names: str) -> Expr:
 
 
 def lit(value, dtype=None) -> Expr:
+    """Literal expression."""
     return Expr(LitExpr(value, dtype))
 
 
@@ -26,10 +28,12 @@ def arange(start=None, stop=None, step=1, dtype=None) -> Expr:
     return Expr(ArangeExpr(start, stop, step, dtype))
 
 
-def array(arr, schema=None) -> StructuredArray:
+def array(arr, schema: SchemaType | None = None) -> StructuredArray:
     """Construct a StructuredArray from any object."""
     if schema is None:
         schema = {}
+    elif not isinstance(schema, Mapping):
+        schema = dict(schema)
     if isinstance(arr, dict):
         series = []
         dtypes = []
