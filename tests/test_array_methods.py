@@ -62,3 +62,17 @@ def test_getitem():
     assert list(df[1, 1:2]) == [5]
     assert list(df[1:3, "a"]) == [2, 3]
     assert df[1:3, 1:2].to_dict(asarray=False) == {"b": [5, 6]}
+
+
+def test_rename():
+    df = st.array({"a": [1, 2, 3], "b": [4, 5, 6]})
+    assert df.rename({"a": "A"}).to_dict(asarray=False) == {
+        "A": [1, 2, 3],
+        "b": [4, 5, 6],
+    }
+
+    df = st.array({"a": [[1, 2], [2, 3], [3, 2]], "b": [4, 5, 6]})
+    assert df.rename({"a": "A"}).to_dict(asarray=False) == {
+        "A": [[1, 2], [2, 3], [3, 2]],
+        "b": [4, 5, 6],
+    }

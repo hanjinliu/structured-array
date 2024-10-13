@@ -1,6 +1,14 @@
 from __future__ import annotations
 from types import MappingProxyType
-from typing import Any, Iterator, Literal, Sequence, SupportsIndex, overload
+from typing import (
+    Any,
+    Iterator,
+    Literal,
+    Sequence,
+    SupportsIndex,
+    overload,
+    TYPE_CHECKING,
+)
 
 import numpy as np
 from structured_array.groupby import GroupBy
@@ -8,10 +16,24 @@ from structured_array.typing import IntoExpr, IntoIndex, IntoDType
 from structured_array._normalize import into_expr_multi, basic_dtype, unstructure
 from tabulate import tabulate
 
+if TYPE_CHECKING:
+    from typing import Self
+
 
 class StructuredArray:
     def __init__(self, arr: np.ndarray) -> None:
         self._arr = arr
+
+    @classmethod
+    def _from_ndarray(cls, arr: np.ndarray) -> Self:
+        """Create a new instance of the class."""
+        return cls(arr)
+
+    def view(self, cls: type[Self]) -> Self:
+        """View the structured array as another class."""
+        if not isinstance(cls, type) or not issubclass(cls, StructuredArray):
+            raise TypeError("cls must be a subclass of StructuredArray")
+        return cls(self._arr)
 
     @overload
     def to_dict(self, *, asarray: Literal[True] = True) -> dict[str, np.ndarray]: ...
@@ -19,7 +41,7 @@ class StructuredArray:
     def to_dict(self, *, asarray: Literal[False] = True) -> dict[str, list[Any]]: ...
 
     def to_dict(self, asarray: bool = True) -> dict[str, np.ndarray]:
-        """Convert the StructuredArray to a dictionary of columns."""
+        """Convert the structured array to a dictionary of columns."""
         if asarray:
             return {name: self._arr[name] for name in self.columns}
         else:
@@ -41,7 +63,7 @@ class StructuredArray:
 
     @property
     def shape(self) -> tuple[int, ...]:
-        """Shape of the StructuredArray."""
+        """Shape of the structured array."""
         return self._arr.shape
 
     @property
@@ -49,25 +71,40 @@ class StructuredArray:
         """MappingProxyType of column names to dtypes."""
         return MappingProxyType({k: v[0] for k, v in self._arr.dtype.fields.items()})
 
-    def head(self, n: int = 5) -> StructuredArray:
-        """Return the first n rows of the StructuredArray."""
-        return StructuredArray(self._arr[:n])
+    def head(self, n: int = 5) -> Self:
+        """Return the first n rows of the structured array."""
+        return self._from_ndarray(self._arr[:n])
 
-    def tail(self, n: int = 5) -> StructuredArray:
-        """Return the last n rows of the StructuredArray."""
-        return StructuredArray(self._arr[-n:])
+    def tail(self, n: int = 5) -> Self:
+        """Return the last n rows of the structured array."""
+        return self._from_ndarray(self._arr[-n:])
 
     def iter_rows(self) -> Iterator[np.void]:
-        """Iterate over the rows of the StructuredArray."""
+        """Iterate over the rows of the structured array."""
         return iter(self._arr)
 
     def iter_columns(self) -> Iterator[np.ndarray]:
-        """Iterate over the columns of the StructuredArray."""
+        """Iterate over the columns of the structured array."""
         return (self._arr[name] for name in self.columns)
 
-    def filter(self, *predicates: IntoExpr) -> StructuredArray:
+    def rename(self, mapping: dict[str, str], **kwargs) -> Self:
+        """Rename columns of the structured array."""
+        mapping = {**mapping, **kwargs}
+        dtypes = []
+        for name in self.columns:
+            dtype: np.dtype = self._arr.dtype[name]
+            new_name = mapping.get(name, name)
+            dtypes.append((new_name, dtype.base, dtype.shape))
+        new_arr = np.empty(self.shape, dtype=dtypes)
+        for name in self.columns:
+            new_name = mapping.get(name, name)
+            arr = self._arr[name]
+            new_arr[new_name] = arr
+        return self._from_ndarray(new_arr)
+
+    def filter(self, *predicates: IntoExpr) -> Self:
         """
-        Filter the StructuredArray by predicates.
+        Filter the structured array by predicates.
 
         Examples
         --------
@@ -101,13 +138,13 @@ class StructuredArray:
             for pred in exprs[1:]:
                 predicate = predicate & pred
         mask = unstructure(predicate._apply_expr(self._arr))
-        return StructuredArray(self._arr[mask])
+        return self._from_ndarray(self._arr[mask])
 
     def group_by(
         self, by: IntoExpr | Sequence[IntoExpr], *more_by: IntoExpr
     ) -> GroupBy:
         """
-        Group the StructuredArray by columns or expressions.
+        Group the structured array by columns or expressions.
 
         Examples
         --------
@@ -136,29 +173,27 @@ class StructuredArray:
         """
         return GroupBy.from_by(self, by, *more_by)
 
-    def sort(self, by: IntoExpr, *, ascending: bool = True) -> StructuredArray:
+    def sort(self, by: IntoExpr, *, ascending: bool = True) -> Self:
         by = into_expr_multi(by)[0]
         order = np.argsort(by._apply_expr(self._arr), kind="stable")
         if not ascending:
             order = order[::-1]
-        return StructuredArray(self._arr[order])
+        return self._from_ndarray(self._arr[order])
 
-    def join(
-        self, other: StructuredArray, on: str, suffix: str = "_right"
-    ) -> StructuredArray:
-        """Join two StructuredArrays on the 'uid' column"""
+    def join(self, other: StructuredArray, on: str, suffix: str = "_right") -> Self:
+        """Join two structured arrays on the 'uid' column"""
         from numpy.lib.recfunctions import join_by
 
         new_arr = join_by(on, self._arr, other._arr, r1postfix="", r2postfix=suffix)
-        return StructuredArray(new_arr)
+        return self._from_ndarray(new_arr)
 
     def select(
         self,
         columns: IntoExpr | Sequence[IntoExpr],
         *more_columns: IntoExpr,
-    ) -> StructuredArray:
+    ) -> Self:
         """
-        Select columns from the StructuredArray by names or expressions.
+        Select columns from the structured array by names or expressions.
 
         >>> import structured_array as st
         >>> arr = st.array({"a": [1, 2, 3], "b": [4, 5, 6]})
@@ -172,8 +207,8 @@ class StructuredArray:
         self,
         *exprs: IntoExpr | Sequence[IntoExpr],
         **named_exprs: IntoExpr,
-    ) -> StructuredArray:
-        """Return a new StructuredArray with additional columns."""
+    ) -> Self:
+        """Return a new structured array with additional columns."""
         exprs = into_expr_multi(*exprs, **named_exprs)
         arrs = [self._arr[[name]] for name in self.columns] + [
             expr._apply_expr(self._arr) for expr in exprs
@@ -212,11 +247,11 @@ class StructuredArray:
     @overload
     def __getitem__(self, key: str) -> np.ndarray: ...
     @overload
-    def __getitem__(self, key: SupportsIndex) -> np.void: ...
+    def __getitem__(self, key: SupportsIndex) -> Self: ...
     @overload
-    def __getitem__(self, key: slice | list[str] | np.ndarray) -> StructuredArray: ...
+    def __getitem__(self, key: slice | list[str] | np.ndarray) -> Self: ...
     @overload
-    def __getitem__(self, key: tuple[slice, slice]) -> StructuredArray: ...
+    def __getitem__(self, key: tuple[slice, slice]) -> Self: ...
     @overload
     def __getitem__(self, key: tuple[slice, IntoIndex]) -> np.ndarray: ...
     @overload
@@ -229,9 +264,9 @@ class StructuredArray:
         if isinstance(key, str):
             return self._arr[key]
         elif isinstance(key, (slice, np.ndarray)):
-            return StructuredArray(self._arr[key])
+            return self._from_ndarray(self._arr[key])
         elif isinstance(key, SupportsIndex):
-            return StructuredArray(self._arr[key : key + 1])
+            return self._from_ndarray(self._arr[key : key + 1])
         elif isinstance(key, list):
             if any(not isinstance(k, str) for k in key):
                 raise TypeError("If list is given, all elements must be str")
@@ -271,7 +306,7 @@ class StructuredArray:
 
     def _new_structured_array(
         self, arrs: list[np.ndarray], allow_duplicates: bool = False
-    ) -> StructuredArray:
+    ) -> Self:
         height = max(arr.shape[0] if arr.ndim > 0 else 1 for arr in arrs)
         if allow_duplicates:
             dtypes_all = _dtype_of_arrays(arrs)
@@ -288,7 +323,7 @@ class StructuredArray:
         out = np.empty(height, dtype=dtypes)
         for name, arr in columns:
             out[name] = unstructure(arr)
-        return StructuredArray(out)
+        return self._from_ndarray(out)
 
 
 def _dtype_of_arrays(arrs: list[np.ndarray]) -> list[IntoDType]:

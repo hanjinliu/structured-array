@@ -8,14 +8,6 @@ Efficient manipulation of the numpy structured arrays.
 
 -----
 
-## Table of Contents
-
-- [structured-array](#structured-array)
-  - [Table of Contents](#table-of-contents)
-  - [Installation](#installation)
-  - [Examples](#examples)
-  - [License](#license)
-
 ## Installation
 
 ```console
@@ -23,6 +15,8 @@ pip install structured-array
 ```
 
 ## Examples
+
+A structured array can easily be created.
 
 ```python
 import structured_array as st
@@ -42,6 +36,21 @@ label    value    array
 a        4        (3,) array
 b        5        (3,) array
 c        6        (3,) array
+```
+
+You can directly read and write the structured array from/to a npy file.
+
+```python
+arr = st.read_npy("data.npy")
+```
+
+`structured-array` use [polars expression system](https://docs.pola.rs/user-guide/concepts/expressions-and-contexts/)
+to manipulate the structured array.
+
+```python
+arr.select("label", st.col("value") + 1)  # column selection
+arr.group_by("label").agg(st.col("value").sum())  # aggregation
+arr.filter(st.col("value") > 5)  # filtering
 ```
 
 ## License
