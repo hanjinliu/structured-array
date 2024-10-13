@@ -3,6 +3,7 @@ from types import MappingProxyType
 from typing import Any, Iterator, Literal, Sequence, SupportsIndex, overload
 
 import numpy as np
+from structured_array.groupby import GroupBy
 from structured_array.typing import IntoExpr, IntoIndex
 from structured_array._normalize import into_expr_multi, basic_dtype, unstructure
 from tabulate import tabulate
@@ -68,6 +69,16 @@ class StructuredArray:
         predicate = into_expr_multi(predicate)[0]
         mask = predicate._apply_expr(self._arr)
         return StructuredArray(self._arr[mask])
+
+    @overload
+    def group_by(self, by: str, *more_by: str) -> GroupBy[np.void]: ...
+    @overload
+    def group_by(self, by: str) -> GroupBy[np.generic]: ...
+    @overload
+    def group_by(self, by: list[str], *more_by: str) -> GroupBy[np.void]: ...
+
+    def group_by(self, by, *more_by) -> GroupBy:
+        return GroupBy.from_by(self, by, *more_by)
 
     def sort(self, by: IntoExpr, *, ascending: bool = True) -> StructuredArray:
         by = into_expr_multi(by)[0]
@@ -146,7 +157,7 @@ class StructuredArray:
     @overload
     def __getitem__(self, key: SupportsIndex) -> np.void: ...
     @overload
-    def __getitem__(self, key: slice | list[str]) -> StructuredArray: ...
+    def __getitem__(self, key: slice | list[str] | np.ndarray) -> StructuredArray: ...
     @overload
     def __getitem__(self, key: tuple[IntoIndex | slice, IntoIndex | slice]) -> Any: ...
 
@@ -154,10 +165,10 @@ class StructuredArray:
         """Get a column by name, indices or slices."""
         if isinstance(key, str):
             return self._arr[key]
-        elif isinstance(key, SupportsIndex):
-            return self[key : key + 1]
-        elif isinstance(key, slice):
+        elif isinstance(key, (slice, np.ndarray)):
             return StructuredArray(self._arr[key])
+        elif isinstance(key, SupportsIndex):
+            return StructuredArray(self._arr[key : key + 1])
         elif isinstance(key, list):
             if any(not isinstance(k, str) for k in key):
                 raise TypeError("If list is given, all elements must be str")

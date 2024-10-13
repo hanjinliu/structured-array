@@ -125,6 +125,42 @@ class Expr:
     def log(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.log)))
 
+    def log2(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.log2)))
+
+    def log10(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.log10)))
+
+    def log1p(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.log1p)))
+
+    def expm1(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.expm1)))
+
+    def square(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.square)))
+
+    def cbrt(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.cbrt)))
+
+    def reciprocal(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.reciprocal)))
+
+    def negative(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.negative)))
+
+    def absolute(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.absolute)))
+
+    def sign(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.sign)))
+
+    def rint(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.rint)))
+
+    def fix(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.fix)))
+
     def abs(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.abs)))
 
@@ -148,6 +184,15 @@ class Expr:
 
     def var(self, axis=None) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.var, axis=axis)))
+
+    def median(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.median, axis=axis)))
+
+    def percentile(self, q, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.percentile, q, axis=axis)))
+
+    def quantile(self, q, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.quantile, q, axis=axis)))
 
     def all(self, axis=None) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.all, axis=axis)))
@@ -174,6 +219,37 @@ class Expr:
         return Expr(
             self._op.compose(_uexp.UfuncExpr(np.clip, a_min=a_min, a_max=a_max))
         )
+
+    ##### the "isXX" methods ########################################################
+    def isin(self, values) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isin, values=values)))
+
+    def isnan(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isnan)))
+
+    def isinf(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isinf)))
+
+    def isfinite(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isfinite)))
+
+    def isposinf(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isposinf)))
+
+    def isneginf(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isneginf)))
+
+    def isreal(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isreal)))
+
+    def iscomplex(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.iscomplex)))
+
+    def isrealobj(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isrealobj)))
+
+    def iscomplexobj(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.iscomplexobj)))
 
     def shape(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(_shape)))
