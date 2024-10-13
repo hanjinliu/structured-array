@@ -44,9 +44,10 @@ def test_dict_of_3D_arrays():
 
 
 def test_schema():
-    arr = st.array(
-        {"a": [1, 2, 3], "b": [4, 5, 6]}, schema={"a": np.uint16, "b": np.float32}
-    )
+    d = {"a": [1, 2, 3], "b": [4, 5, 6]}
+    arr = st.array(d, schema={"a": np.uint16, "b": np.float32})
+    assert arr.schema == {"a": np.uint16, "b": np.float32}
+    arr = st.array(d, schema=[("a", "uint16"), ("b", "float32")])
     assert arr.schema == {"a": np.uint16, "b": np.float32}
 
 

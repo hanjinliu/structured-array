@@ -41,6 +41,9 @@ def basic_dtype(d: np.dtype) -> np.dtype:
 
 
 class ColumnCaster:
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"{self.__class__.__name__}()"
+
     def cast(self, arr: np.ndarray) -> np.ndarray:
         return arr
 
@@ -53,20 +56,27 @@ class NamedColumnCaster(ColumnCaster):
         self.name = name
         self.dtype = dtype
 
+    def __repr__(self) -> str:  # pragma: no cover
+        return f"{self.__class__.__name__}(name={self.name!r}, dtype={self.dtype!r})"
+
     def cast(self, arr: np.ndarray) -> np.ndarray:
         return arr[self.name]
 
     def uncast(self, arr: np.ndarray) -> np.ndarray:
         dtype = arr.dtype if self.dtype is None else self.dtype
-        if arr.ndim < 2:
-            out = np.asarray(arr, dtype=[(self.name, dtype, ())])
-        else:
-            out = np.empty(arr.shape[0], dtype=[(self.name, dtype, arr.shape[1:])])
-            out[self.name] = arr
-        return out
+        return asarray_maybe_nd(arr, self.name, dtype)
 
 
-def caster(arr, dtype=None) -> ColumnCaster:
+def asarray_maybe_nd(arr: np.ndarray, name: str, dtype=None) -> np.ndarray:
+    if arr.ndim < 2:
+        out = np.asarray(arr, dtype=[(name, dtype, ())])
+    else:
+        out = np.empty(arr.shape[0], dtype=[(name, dtype, arr.shape[1:])])
+        out[name] = arr
+    return out
+
+
+def caster(arr: np.ndarray, dtype=None) -> ColumnCaster:
     if arr.dtype.names is None:
         return ColumnCaster()
     return NamedColumnCaster(arr.dtype.names[0], dtype)

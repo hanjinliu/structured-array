@@ -3,10 +3,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import numpy as np
 
-from structured_array._normalize import caster, unstructure
+from structured_array._normalize import caster, unstructure, asarray_maybe_nd
 
 
 class UnitExpr(ABC):
+    """Expression object that represents a single operation"""
+
     @abstractmethod
     def apply(self, arr: np.ndarray) -> np.ndarray:
         """Evaluate the expression on the input array"""
@@ -50,8 +52,9 @@ class NArgExpr(UnitExpr):
         self.kwargs = kwargs
 
     def apply(self, arr: np.ndarray) -> np.ndarray:
-        _caster = caster(arr)
-        _args = [unstructure(op.apply(arr)) for op in self.ops]
+        _arrs_structured = [op.apply(arr) for op in self.ops]
+        _args = [unstructure(_a) for _a in _arrs_structured]
+        _caster = caster(_arrs_structured[0])  # inherits name from the 1st arg
         out = _caster.uncast(self.func(*_args, **self.kwargs))
         return out
 
@@ -61,6 +64,12 @@ class SelectExpr(UnitExpr):
         self.columns = list(columns)
 
     def apply(self, arr: np.ndarray) -> np.ndarray:
+        if len(self.columns) == 1:
+            name = self.columns[0]
+            ar0 = arr[name]
+            if ar0.dtype.names is not None:  # pragma: no cover
+                raise RuntimeError(f"Unexpected nested structured array: {ar0!r}")
+            return asarray_maybe_nd(ar0, name, ar0.dtype)
         return arr[self.columns]
 
 
@@ -70,7 +79,9 @@ class AliasExpr(UnitExpr):
 
     def apply(self, arr: np.ndarray) -> np.ndarray:
         ar = unstructure(arr)
-        return np.asarray(ar, dtype=[(self.alias, ar.dtype, arr.shape[1:])])
+        if ar.dtype.names is not None:  # pragma: no cover
+            raise RuntimeError(f"Unexpected nested structured array: {ar!r}")
+        return asarray_maybe_nd(ar, self.alias, ar.dtype)
 
 
 class LitExpr(UnitExpr):
@@ -88,7 +99,7 @@ class CastExpr(UnitExpr):
 
     def apply(self, arr: np.ndarray) -> np.ndarray:
         ar = unstructure(arr)
-        return np.asarray(ar, dtype=[(arr.dtype.names[0], self.dtype, arr.shape[1:])])
+        return asarray_maybe_nd(ar, arr.dtype.names[0], self.dtype)
 
 
 class ArangeExpr(UnitExpr):
