@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterator, Generic, TypeVar
+from typing import TYPE_CHECKING, Iterator
 import numpy as np
 from structured_array.typing import IntoExpr
 from structured_array._normalize import into_expr_multi
@@ -8,10 +8,8 @@ from structured_array._normalize import into_expr_multi
 if TYPE_CHECKING:
     from structured_array.array import StructuredArray
 
-_T = TypeVar("_T", bound=np.generic)
 
-
-class GroupBy(Generic[_T]):
+class GroupBy:
     def __init__(self, arr: StructuredArray, by: list[IntoExpr]) -> None:
         self._arr = arr
         self._by = by
@@ -22,7 +20,7 @@ class GroupBy(Generic[_T]):
     ) -> GroupBy:
         return cls(arr, into_expr_multi(by, *more_by))
 
-    def __iter__(self) -> Iterator[tuple[_T, StructuredArray]]:
+    def __iter__(self) -> Iterator[tuple[np.void, StructuredArray]]:
         from structured_array.array import StructuredArray
 
         arr_ref = self._arr.select(self._by)._arr

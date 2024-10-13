@@ -51,9 +51,9 @@ class NArgExpr(UnitExpr):
 
     def apply(self, arr: np.ndarray) -> np.ndarray:
         _caster = caster(arr)
-        return _caster.uncast(
-            self.func(*[unstructure(op.apply(arr)) for op in self.ops], **self.kwargs)
-        )
+        _args = [unstructure(op.apply(arr)) for op in self.ops]
+        out = _caster.uncast(self.func(*_args, **self.kwargs))
+        return out
 
 
 class SelectExpr(UnitExpr):
@@ -79,7 +79,7 @@ class LitExpr(UnitExpr):
         self.dtype = dtype
 
     def apply(self, arr: np.ndarray) -> np.ndarray:
-        return np.full(arr.shape, self.value, dtype=self.dtype)
+        return np.full((), self.value, dtype=self.dtype).item()
 
 
 class CastExpr(UnitExpr):
@@ -87,7 +87,8 @@ class CastExpr(UnitExpr):
         self.dtype = dtype
 
     def apply(self, arr: np.ndarray) -> np.ndarray:
-        return arr.astype(self.dtype, copy=False)
+        ar = unstructure(arr)
+        return np.asarray(ar, dtype=[(arr.dtype.names[0], self.dtype, arr.shape[1:])])
 
 
 class ArangeExpr(UnitExpr):

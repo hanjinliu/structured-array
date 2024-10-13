@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -22,15 +22,14 @@ def into_expr(value: IntoExpr) -> Expr:
 
 
 def into_expr_multi(
-    columns: IntoExpr | Sequence[IntoExpr],
-    *more_columns: IntoExpr,
-    **named_columns: IntoExpr,
+    *exprs: IntoExpr,
+    **named_exprs: IntoExpr,
 ) -> list[Expr]:
-    if isinstance(columns, str) or not hasattr(columns, "__iter__"):
-        columns = [columns]
-    all_columns = [*columns, *more_columns]
-    named = [into_expr(col).alias(name) for name, col in named_columns.items()]
-    return [into_expr(col) for col in all_columns] + named
+    if len(exprs) == 1:
+        if not isinstance(exprs[0], str) and hasattr(exprs[0], "__iter__"):
+            exprs = exprs[0]
+    named = [into_expr(col).alias(name) for name, col in named_exprs.items()]
+    return [into_expr(col) for col in exprs] + named
 
 
 def basic_dtype(d: np.dtype) -> np.dtype:
@@ -54,11 +53,16 @@ class NamedColumnCaster(ColumnCaster):
         self.name = name
         self.dtype = dtype
 
-    def cast(self, arr):
+    def cast(self, arr: np.ndarray):
         return arr[self.name]
 
-    def uncast(self, arr):
-        return np.asarray(arr, dtype=[(self.name, self.dtype, arr.shape[1:])])
+    def uncast(self, arr: np.ndarray):
+        if arr.ndim < 2:
+            out = np.asarray(arr, dtype=[(self.name, self.dtype, ())])
+        else:
+            out = np.empty(arr.shape[0], dtype=[(self.name, self.dtype, arr.shape[1:])])
+            out[self.name] = arr
+        return out
 
 
 def caster(arr, dtype=None) -> ColumnCaster:
@@ -67,9 +71,9 @@ def caster(arr, dtype=None) -> ColumnCaster:
     return NamedColumnCaster(arr.dtype.names[0], dtype)
 
 
-def unstructure(arr: np.ndarray) -> np.ndarray:
+def unstructure(arr: np.ndarray | np.generic) -> np.ndarray:
     """Convert a structured array to a regular array."""
-    if arr.dtype.names is None:
+    if not isinstance(arr, np.ndarray) or arr.dtype.names is None:
         return arr
     return caster(arr).cast(arr)
 

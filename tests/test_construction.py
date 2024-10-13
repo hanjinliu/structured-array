@@ -1,4 +1,6 @@
+from pathlib import Path
 import numpy as np
+from numpy.testing import assert_array_equal
 import structured_array as st
 import pytest
 
@@ -64,6 +66,14 @@ def test_polars():
     df = pl.DataFrame(d)
     arr = st.array(df)
     assert arr.to_dict(asarray=False) == pytest.approx(d)
+
+
+def test_io(tmp_path: Path):
+    ar = st.array({"a": [1, 2, 3], "b": [4.0, 5.0, 6.0]})
+    path = tmp_path / "test.npy"
+    ar.write_npy(path)
+    ar2 = st.read_npy(path)
+    assert_array_equal(ar, ar2)
 
 
 @pytest.mark.parametrize(

@@ -4,7 +4,7 @@ from typing import Any, Iterator, Literal, Sequence, SupportsIndex, overload
 
 import numpy as np
 from structured_array.groupby import GroupBy
-from structured_array.typing import IntoExpr, IntoIndex
+from structured_array.typing import IntoExpr, IntoIndex, IntoDType
 from structured_array._normalize import into_expr_multi, basic_dtype, unstructure
 from tabulate import tabulate
 
@@ -70,14 +70,9 @@ class StructuredArray:
         mask = predicate._apply_expr(self._arr)
         return StructuredArray(self._arr[mask])
 
-    @overload
-    def group_by(self, by: str, *more_by: str) -> GroupBy[np.void]: ...
-    @overload
-    def group_by(self, by: str) -> GroupBy[np.generic]: ...
-    @overload
-    def group_by(self, by: list[str], *more_by: str) -> GroupBy[np.void]: ...
-
-    def group_by(self, by, *more_by) -> GroupBy:
+    def group_by(
+        self, by: IntoExpr | Sequence[IntoExpr], *more_by: IntoExpr
+    ) -> GroupBy:
         return GroupBy.from_by(self, by, *more_by)
 
     def sort(self, by: IntoExpr, *, ascending: bool = True) -> StructuredArray:
@@ -114,14 +109,15 @@ class StructuredArray:
 
     def with_columns(
         self,
-        columns: IntoExpr | Sequence[IntoExpr],
-        *more_columns: IntoExpr,
-        **named_columns: IntoExpr,
+        *exprs: IntoExpr | Sequence[IntoExpr],
+        **named_exprs: IntoExpr,
     ) -> StructuredArray:
         """Return a new StructuredArray with additional columns."""
-        exprs = into_expr_multi(columns, *more_columns, **named_columns)
-        arrs = [expr._apply_expr(self._arr) for expr in exprs]
-        return self._new_structured_array(arrs)
+        exprs = into_expr_multi(*exprs, **named_exprs)
+        arrs = [self._arr[[name]] for name in self.columns] + [
+            expr._apply_expr(self._arr) for expr in exprs
+        ]
+        return self._new_structured_array(arrs, allow_duplicates=True)
 
     def __repr__(self) -> str:
         def _repr(a, name: str):
@@ -191,16 +187,29 @@ class StructuredArray:
         else:
             return np.asarray(self._arr, dtype=dtype)
 
-    def _new_structured_array(self, arrs: list[np.ndarray]) -> StructuredArray:
-        dtypes = _dtype_of_arrays(arrs)
+    def _new_structured_array(
+        self, arrs: list[np.ndarray], allow_duplicates: bool = False
+    ) -> StructuredArray:
         height = max(arr.shape[0] if arr.ndim > 0 else 1 for arr in arrs)
+        if allow_duplicates:
+            dtypes_all = _dtype_of_arrays(arrs)
+            columns: dict[str, np.ndarray] = {}
+            dtypes_dict: dict[str, IntoDType] = {}
+            for (name, dtype, shape), arr in zip(dtypes_all, arrs):
+                columns[name] = arr
+                dtypes_dict[name] = (name, dtype, shape)
+            dtypes = list(dtypes_dict.values())
+            columns = {name: arr for (name, _, _), arr in zip(dtypes_all, arrs)}.items()
+        else:
+            dtypes = _dtype_of_arrays(arrs)
+            columns = [(name, arr) for (name, _, _), arr in zip(dtypes, arrs)]
         out = np.empty(height, dtype=dtypes)
-        for (name, _, _), arr in zip(dtypes, arrs):
+        for name, arr in columns:
             out[name] = unstructure(arr)
         return StructuredArray(out)
 
 
-def _dtype_of_arrays(arrs: list[np.ndarray]):
+def _dtype_of_arrays(arrs: list[np.ndarray]) -> list[IntoDType]:
     return [
         (arr.dtype.names[0], basic_dtype(arr.dtype[0]), arr.shape[1:]) for arr in arrs
     ]
