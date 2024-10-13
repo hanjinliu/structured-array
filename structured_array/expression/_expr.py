@@ -1,6 +1,6 @@
 from __future__ import annotations
 import operator
-from typing import Sequence
+from typing import Any, Sequence
 
 import numpy as np
 from structured_array.expression import _unitexpr as _uexp
@@ -38,37 +38,37 @@ class Expr:
     def __xor__(self, other: Expr) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.xor))
 
-    def add(self, other: Expr) -> Expr:
+    def add(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.add))
 
-    def sub(self, other: Expr) -> Expr:
+    def sub(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.sub))
 
-    def mul(self, other: Expr) -> Expr:
+    def mul(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.mul))
 
-    def truediv(self, other: Expr) -> Expr:
+    def truediv(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.truediv))
 
-    def pow(self, other: Expr) -> Expr:
+    def pow(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.pow))
 
-    def eq(self, other: Expr) -> Expr:
+    def eq(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.eq))
 
-    def ne(self, other: Expr) -> Expr:
+    def ne(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.ne))
 
-    def lt(self, other: Expr) -> Expr:
+    def lt(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.lt))
 
-    def le(self, other: Expr) -> Expr:
+    def le(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.le))
 
-    def gt(self, other: Expr) -> Expr:
+    def gt(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.gt))
 
-    def ge(self, other: Expr) -> Expr:
+    def ge(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.ge))
 
     __add__ = add
