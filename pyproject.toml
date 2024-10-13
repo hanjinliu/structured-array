@@ -26,6 +26,14 @@ classifiers = [
 ]
 dependencies = [
   "numpy>=1.21.0",
+  "tabulate>=0.9.0",
+]
+
+[project.optional-dependencies]
+testing = [
+  "pytest",
+  "pandas>=2.2.3",
+  "polars>=1.9.0",
 ]
 
 [project.urls]
@@ -34,25 +42,25 @@ Issues = "https://github.com/Hanjin Liu/structured-array/issues"
 Source = "https://github.com/Hanjin Liu/structured-array"
 
 [tool.hatch.version]
-path = "src/structured_array/__about__.py"
+path = "structured_array/__about__.py"
 
 [tool.hatch.envs.types]
 extra-dependencies = [
   "mypy>=1.0.0",
 ]
 [tool.hatch.envs.types.scripts]
-check = "mypy --install-types --non-interactive {args:src/structured_array tests}"
+check = "mypy --install-types --non-interactive {args:structured_array tests}"
 
 [tool.coverage.run]
 source_pkgs = ["structured_array", "tests"]
 branch = true
 parallel = true
 omit = [
-  "src/structured_array/__about__.py",
+  "structured_array/__about__.py",
 ]
 
 [tool.coverage.paths]
-structured_array = ["src/structured_array", "*/structured-array/src/structured_array"]
+structured_array = ["structured_array", "*/structured-array/structured_array"]
 tests = ["tests", "*/structured-array/tests"]
 
 [tool.coverage.report]

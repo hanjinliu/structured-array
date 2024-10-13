@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import ctypes
 from pathlib import Path
 from typing import Sequence, TYPE_CHECKING, cast
 import numpy as np
+from structured_array._normalize import dtype_kind_to_dtype
 from structured_array.array import StructuredArray
 from structured_array.expression import Expr, SelectExpr, LitExpr, ArangeExpr
 
 if TYPE_CHECKING:
-    from pandas.core.interchange.dataframe_protocol import DataFrame
+    from pandas.core.interchange.dataframe_protocol import DataFrame, Column
 
 
 def col(name: str | Sequence[str], *more_names: str) -> Expr:
@@ -49,12 +51,17 @@ def array(arr, schema=None) -> StructuredArray:
         df = cast("DataFrame", arr.__dataframe__())
         nrows = df.num_rows()
         dtypes = [
-            (name, schema.get(name, df.get_column_by_name(name).dtype))
+            (
+                name,
+                schema.get(
+                    name, dtype_kind_to_dtype(df.get_column_by_name(name).dtype)
+                ),
+            )
             for name in df.column_names()
         ]
         out = np.empty(nrows, dtype=dtypes)
         for name in df.column_names():
-            out[name] = np.asarray(df.get_column_by_name(name))
+            out[name] = _column_to_numpy(df.get_column_by_name(name))
         return StructuredArray(out)
     else:
         if schema:
@@ -71,3 +78,12 @@ def read_npy(path: str | Path | bytes) -> StructuredArray:
     if not isinstance(ar, np.ndarray):
         raise ValueError("Input file is not a numpy array")
     return StructuredArray(ar)
+
+
+def _column_to_numpy(col: Column) -> np.ndarray:
+    buf = col.get_buffers()["data"][0]
+    dtype = dtype_kind_to_dtype(col.dtype)
+    ptr = buf.ptr
+    bufsize = buf.bufsize
+    ctypes_array = (ctypes.c_byte * bufsize).from_address(ptr)
+    return np.frombuffer(ctypes_array, dtype=dtype)

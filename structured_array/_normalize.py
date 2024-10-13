@@ -7,6 +7,7 @@ import numpy as np
 if TYPE_CHECKING:
     from structured_array.expression import Expr
     from structured_array.typing import IntoExpr
+    from pandas.core.interchange.dataframe_protocol import DtypeKind
 
 
 def into_expr(value: IntoExpr) -> Expr:
@@ -71,3 +72,20 @@ def unstructure(arr: np.ndarray) -> np.ndarray:
     if arr.dtype.names is None:
         return arr
     return caster(arr).cast(arr)
+
+
+_DTYPE_KINDS = {
+    0: "i",
+    1: "u",
+    2: "f",
+    20: "b",
+    21: "S",
+    22: "M",
+    23: "O",
+}
+
+
+def dtype_kind_to_dtype(kind: tuple[DtypeKind, int, str, str]) -> np.dtype:
+    _kind = _DTYPE_KINDS[kind[0].value]
+    _byte = kind[1] // 8
+    return np.dtype(f"{_kind}{_byte}")
