@@ -4,9 +4,7 @@ from pathlib import Path
 from typing import Sequence, TYPE_CHECKING, cast
 import numpy as np
 from structured_array.array import StructuredArray
-from structured_array.expression import Expr, SelectExpr, LitExpr, ArangeExpr, NArgExpr
-from structured_array.types import IntoExpr
-from structured_array._normalize import into_expr_multi
+from structured_array.expression import Expr, SelectExpr, LitExpr, ArangeExpr
 
 if TYPE_CHECKING:
     from pandas.core.interchange.dataframe_protocol import DataFrame
@@ -26,16 +24,8 @@ def arange(start=None, stop=None, step=1, dtype=None) -> Expr:
     return Expr(ArangeExpr(start, stop, step, dtype))
 
 
-def _concat(*arr):
-    return np.concatenate(arr, axis=-1)
-
-
-def concat(columns: IntoExpr | Sequence[IntoExpr], *more_columns: IntoExpr) -> Expr:
-    exprs = into_expr_multi(columns, *more_columns)
-    return Expr(NArgExpr([expr._op for expr in exprs], _concat))
-
-
 def array(arr, schema=None) -> StructuredArray:
+    """Construct a StructuredArray from any object."""
     if schema is None:
         schema = {}
     if isinstance(arr, dict):
@@ -49,7 +39,7 @@ def array(arr, schema=None) -> StructuredArray:
             heights.add(data.shape[0])
         if len(heights) > 1:
             raise ValueError("All arrays must have the same number of rows")
-        elif len(dtypes) == 0:
+        if len(dtypes) == 0:
             return StructuredArray(np.empty(0, dtype=[]))
         out = np.empty(max(heights), dtype=dtypes)
         for (dtype_name, _, _), data in zip(dtypes, series):

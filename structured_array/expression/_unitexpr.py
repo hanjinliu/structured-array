@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import numpy as np
 
+from structured_array._normalize import caster, unstructure
+
 
 class UnitExpr(ABC):
     @abstractmethod
@@ -31,13 +33,14 @@ class CompositeExpr(UnitExpr):
 
 
 class UfuncExpr(UnitExpr):
-    def __init__(self, ufunc, **kwargs) -> None:
+    def __init__(self, ufunc, *args, **kwargs) -> None:
         self.ufunc = ufunc
+        self.args = args
         self.kwargs = kwargs
 
     def apply(self, arr: np.ndarray) -> np.ndarray:
         _caster = caster(arr)
-        return _caster.uncast(self.ufunc(_caster.cast(arr), **self.kwargs))
+        return _caster.uncast(self.ufunc(_caster.cast(arr), *self.args, **self.kwargs))
 
 
 class NArgExpr(UnitExpr):
@@ -111,35 +114,3 @@ class ArangeExpr(UnitExpr):
         if out.size != num:
             raise ValueError("Size mismatch")
         return out
-
-
-class ColumnCaster:
-    def cast(self, arr):
-        return arr
-
-    def uncast(self, arr):
-        return arr
-
-
-class NamedColumnCaster(ColumnCaster):
-    def __init__(self, name: str, dtype) -> None:
-        self.name = name
-        self.dtype = dtype
-
-    def cast(self, arr):
-        return arr[self.name]
-
-    def uncast(self, arr):
-        return np.asarray(arr, dtype=[(self.name, self.dtype, arr.shape[1:])])
-
-
-def caster(arr, dtype=None) -> ColumnCaster:
-    if arr.dtype.names is None:
-        return ColumnCaster()
-    return NamedColumnCaster(arr.dtype.names[0], dtype)
-
-
-def unstructure(arr: np.ndarray) -> np.ndarray:
-    if arr.dtype.names is None:
-        return arr
-    return caster(arr).cast(arr)

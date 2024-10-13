@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "structured-array"
 dynamic = ["version"]
-description = ''
+description = "Efficient manipulation of the numpy structured arrays."
 readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}

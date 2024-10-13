@@ -1,8 +1,10 @@
 from __future__ import annotations
 import operator
+from typing import Sequence
 
 import numpy as np
 from structured_array.expression import _unitexpr as _uexp
+from structured_array.typing import IntoExpr
 
 
 class Expr:
@@ -131,6 +133,72 @@ class Expr:
 
     def min(self, axis=None) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.min, axis=axis)))
+
+    def max(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.max, axis=axis)))
+
+    def sum(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.sum, axis=axis)))
+
+    def mean(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.mean, axis=axis)))
+
+    def std(self, axis=None, ddof: int = 0) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.std, axis=axis, ddof=ddof)))
+
+    def var(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.var, axis=axis)))
+
+    def all(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.all, axis=axis)))
+
+    def any(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.any, axis=axis)))
+
+    def argmin(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.argmin, axis=axis)))
+
+    def argmax(self, axis=None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.argmax, axis=axis)))
+
+    def ceil(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.ceil)))
+
+    def floor(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.floor)))
+
+    def round(self, decimals=0) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.round, decimals=decimals)))
+
+    def clip(self, a_min, a_max) -> Expr:
+        return Expr(
+            self._op.compose(_uexp.UfuncExpr(np.clip, a_min=a_min, a_max=a_max))
+        )
+
+    def shape(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(_shape)))
+
+    def concat(
+        self, columns: IntoExpr | Sequence[IntoExpr], *more_columns: IntoExpr
+    ) -> Expr:
+        from structured_array._normalize import into_expr_multi
+
+        exprs = into_expr_multi(columns, *more_columns)
+        return Expr(_uexp.NArgExpr([expr._op for expr in exprs], _concat))
+
+    def apply(self, func, *args, **kwargs) -> Expr:
+        return Expr(_uexp.UfuncExpr(func, *args, **kwargs))
+
+    def __getitem__(self, key) -> Expr:
+        return Expr(_uexp.UfuncExpr(operator.getitem, key))
+
+
+def _concat(*arr):
+    return np.concatenate(arr, axis=-1)
+
+
+def _shape(arr: np.ndarray):
+    return np.array(arr.shape, dtype=int)
 
 
 def _to_unit_expr(value) -> _uexp.UnitExpr:

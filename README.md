@@ -3,12 +3,16 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/structured-array.svg)](https://pypi.org/project/structured-array)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/structured-array.svg)](https://pypi.org/project/structured-array)
 
+Efficient manipulation of the numpy structured arrays.
+
 -----
 
 ## Table of Contents
 
-- [Installation](#installation)
-- [License](#license)
+- [structured-array](#structured-array)
+  - [Table of Contents](#table-of-contents)
+  - [Installation](#installation)
+  - [License](#license)
 
 ## Installation
 
