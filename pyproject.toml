@@ -42,7 +42,7 @@ Issues = "https://github.com/Hanjin Liu/structured-array/issues"
 Source = "https://github.com/Hanjin Liu/structured-array"
 
 [tool.hatch.version]
-path = "structured_array/__about__.py"
+path = "structured_array/__init__.py"
 
 [tool.hatch.envs.types]
 extra-dependencies = [
@@ -55,9 +55,6 @@ check = "mypy --install-types --non-interactive {args:structured_array tests}"
 source_pkgs = ["structured_array", "tests"]
 branch = true
 parallel = true
-omit = [
-  "structured_array/__about__.py",
-]
 
 [tool.coverage.paths]
 structured_array = ["structured_array", "*/structured-array/structured_array"]
@@ -65,7 +62,9 @@ tests = ["tests", "*/structured-array/tests"]
 
 [tool.coverage.report]
 exclude_lines = [
-  "no cov",
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
+  "pragma: no cover",
+  "except ImportError:",
+  "except ModuleNotFoundError:",
 ]
