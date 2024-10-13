@@ -65,14 +65,75 @@ class StructuredArray:
         """Iterate over the columns of the StructuredArray."""
         return (self._arr[name] for name in self.columns)
 
-    def filter(self, predicate: IntoExpr) -> StructuredArray:
-        predicate = into_expr_multi(predicate)[0]
-        mask = predicate._apply_expr(self._arr)
+    def filter(self, *predicates: IntoExpr) -> StructuredArray:
+        """
+        Filter the StructuredArray by predicates.
+
+        Examples
+        --------
+        >>> import structured_array as st
+        >>> arr = st.array({"a": [1, 2, 3], "b": [4, 5, 6]})
+        >>> arr.filter(st.col("a") > 1)
+
+        a        b
+        [<i8]    [<i8]
+        -------  -------
+        2        5
+        3        6
+
+        Multiple predicates are combined with AND.
+
+        >>> arr.filter(st.col("a") > 1, st.col("b") < 6)
+
+        a        b
+        [<i8]    [<i8]
+        -------  -------
+        3        6
+
+        """
+        exprs = into_expr_multi(*predicates)
+        if len(exprs) == 0:
+            return self
+        if len(exprs) == 1:
+            predicate = exprs[0]
+        else:
+            predicate = exprs[0]
+            for pred in exprs[1:]:
+                predicate = predicate & pred
+        mask = unstructure(predicate._apply_expr(self._arr))
         return StructuredArray(self._arr[mask])
 
     def group_by(
         self, by: IntoExpr | Sequence[IntoExpr], *more_by: IntoExpr
     ) -> GroupBy:
+        """
+        Group the StructuredArray by columns or expressions.
+
+        Examples
+        --------
+        >>> import structured_array as st
+        >>> arr = st.array({"a": [1, 2, 1, 2], "b": [10, 11, 12, 13]})
+
+        Group array by column "a".
+
+        >>> for group, sub_arr in arr.group_by("a"):
+        ...     print(repr(group))
+        ...     print(repr(sub_arr))
+
+        np.void((1,), dtype=[('a', '<i8')])
+        a        b
+        [<i8]    [<i8]
+        -------  -------
+        1        10
+        1        12
+        np.void((2,), dtype=[('a', '<i8')])
+        a        b
+        [<i8]    [<i8]
+        -------  -------
+        2        11
+        2        13
+
+        """
         return GroupBy.from_by(self, by, *more_by)
 
     def sort(self, by: IntoExpr, *, ascending: bool = True) -> StructuredArray:
@@ -155,7 +216,13 @@ class StructuredArray:
     @overload
     def __getitem__(self, key: slice | list[str] | np.ndarray) -> StructuredArray: ...
     @overload
-    def __getitem__(self, key: tuple[IntoIndex | slice, IntoIndex | slice]) -> Any: ...
+    def __getitem__(self, key: tuple[slice, slice]) -> StructuredArray: ...
+    @overload
+    def __getitem__(self, key: tuple[slice, IntoIndex]) -> np.ndarray: ...
+    @overload
+    def __getitem__(self, key: tuple[IntoIndex | slice]) -> np.void: ...
+    @overload
+    def __getitem__(self, key: tuple[IntoIndex, IntoIndex]) -> Any: ...
 
     def __getitem__(self, key):
         """Get a column by name, indices or slices."""
@@ -176,16 +243,31 @@ class StructuredArray:
             elif len(key) == 1:
                 return self[key[0]]
             elif len(key) == 2:
-                return self._arr[key]
+                r, c = key
+                if isinstance(r, slice) and isinstance(c, slice):
+                    columns = self.columns
+                    return self._new_structured_array(
+                        [self._arr[r][[cname]] for cname in columns[c]]
+                    )
+                elif isinstance(c, str):
+                    return self._arr[c][r]
+                elif isinstance(c, SupportsIndex):
+                    cname = self.columns[c]
+                    return _slice_np_void(self._arr[cname], r)
+                return _slice_np_void(self._arr[r], c)
             else:
                 raise TypeError(f"Invalid key length: {len(key)}")
-        raise TypeError(f"Invalid key type: {type(key)}")
+        else:
+            raise TypeError(f"Invalid key type: {type(key)}")
 
     def __array__(self, dtype=None, copy: bool = False) -> np.ndarray:
         if copy:
             return np.array(self._arr, dtype=dtype)
         else:
             return np.asarray(self._arr, dtype=dtype)
+
+    def __len__(self) -> int:
+        return len(self._arr)
 
     def _new_structured_array(
         self, arrs: list[np.ndarray], allow_duplicates: bool = False
@@ -213,3 +295,15 @@ def _dtype_of_arrays(arrs: list[np.ndarray]) -> list[IntoDType]:
     return [
         (arr.dtype.names[0], basic_dtype(arr.dtype[0]), arr.shape[1:]) for arr in arrs
     ]
+
+
+def _slice_np_void(value: np.void, key) -> Any:
+    if isinstance(key, slice):
+        s0, s1, step = key.indices(len(value))
+        rng = range(s0, s1, step)
+        return np.void(
+            tuple(value[i] for i in rng), dtype=[value.dtype.descr[i] for i in rng]
+        )
+    if isinstance(key, (int, np.integer)):
+        return value[key]
+    raise TypeError(f"Invalid key type: {type(key)}")

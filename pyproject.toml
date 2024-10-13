@@ -68,4 +68,5 @@ exclude_lines = [
   "pragma: no cover",
   "except ImportError:",
   "except ModuleNotFoundError:",
+  "@overload",
 ]

@@ -41,10 +41,10 @@ def basic_dtype(d: np.dtype) -> np.dtype:
 
 
 class ColumnCaster:
-    def cast(self, arr):
+    def cast(self, arr: np.ndarray) -> np.ndarray:
         return arr
 
-    def uncast(self, arr):
+    def uncast(self, arr: np.ndarray) -> np.ndarray:
         return arr
 
 
@@ -53,14 +53,15 @@ class NamedColumnCaster(ColumnCaster):
         self.name = name
         self.dtype = dtype
 
-    def cast(self, arr: np.ndarray):
+    def cast(self, arr: np.ndarray) -> np.ndarray:
         return arr[self.name]
 
-    def uncast(self, arr: np.ndarray):
+    def uncast(self, arr: np.ndarray) -> np.ndarray:
+        dtype = arr.dtype if self.dtype is None else self.dtype
         if arr.ndim < 2:
-            out = np.asarray(arr, dtype=[(self.name, self.dtype, ())])
+            out = np.asarray(arr, dtype=[(self.name, dtype, ())])
         else:
-            out = np.empty(arr.shape[0], dtype=[(self.name, self.dtype, arr.shape[1:])])
+            out = np.empty(arr.shape[0], dtype=[(self.name, dtype, arr.shape[1:])])
             out[self.name] = arr
         return out
 
