@@ -43,6 +43,35 @@ def test_dict_of_3D_arrays():
     assert arr["c"].tolist() == [[0, 1], [1, 0]]
 
 
+def test_array_input_1d():
+    arr = st.array(np.arange(10))
+    assert arr.to_dict(asarray=False) == {"column_0": list(range(10))}
+
+
+def test_array_input_2d():
+    arr = st.array(np.arange(10).reshape(5, 2))
+    assert arr.to_dict(asarray=False) == {
+        "column_0": [0, 2, 4, 6, 8],
+        "column_1": [1, 3, 5, 7, 9],
+    }
+
+
+def test_array_input_3d():
+    arr = st.array(np.arange(30).reshape(5, 2, 3))
+    assert arr.to_dict(asarray=False) == {
+        "column_0": [[0, 1, 2], [6, 7, 8], [12, 13, 14], [18, 19, 20], [24, 25, 26]],
+        "column_1": [[3, 4, 5], [9, 10, 11], [15, 16, 17], [21, 22, 23], [27, 28, 29]],
+    }
+
+
+def test_array_input_with_schema():
+    ar = np.arange(6).reshape(3, 2)
+    arr = st.array(ar, schema=["a", "bb"])
+    assert arr.to_dict(asarray=False) == {"a": [0, 2, 4], "bb": [1, 3, 5]}
+    arr = st.array(ar.tolist(), schema=["a", "bb"])
+    assert arr.to_dict(asarray=False) == {"a": [0, 2, 4], "bb": [1, 3, 5]}
+
+
 def test_schema():
     d = {"a": [1, 2, 3], "b": [4, 5, 6]}
     arr = st.array(d, schema={"a": np.uint16, "b": np.float32})

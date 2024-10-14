@@ -201,6 +201,12 @@ class Expr:
             self._op.compose(_uexp.UfuncExpr(np.clip, a_min=a_min, a_max=a_max))
         )
 
+    def degrees(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.degrees)))
+
+    def radians(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.radians)))
+
     ##### Aggregation methods ########################################################
     def min(self, axis: Literal[None, 0] = None) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.min, axis=axis)))
@@ -254,30 +260,91 @@ class Expr:
 
     ##### the "isXX" methods ########################################################
     def isin(self, values) -> Expr:
+        """
+        Get a boolean array of whether the elements are in `values`.
+
+        Examples
+        --------
+        >>> import structured_array as st
+        >>> arr = st.array({"a": [1, 2, 3]})
+        >>> arr.select(st.col("a").isin([1, 3]))
+        a
+        [|b1]
+        -------
+        True
+        False
+        True
+        """
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isin, values)))
 
     def isnan(self) -> Expr:
+        """
+        Get a boolean array of whether the elements are np.nan.
+
+        Examples
+        --------
+        >>> import structured_array as st
+        >>> arr = st.array({"a": [1, np.nan, 3]})
+        >>> arr.select(st.col("a").isnan())
+        a
+        [|b1]
+        -------
+        False
+        True
+        False
+        """
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isnan)))
 
     def isfinite(self) -> Expr:
+        """
+        Get a boolean array of whether the elements are finite.
+
+        Examples
+        --------
+        >>> import structured_array as st
+        >>> arr = st.array({"a": [1, np.nan, np.inf]})
+        >>> arr.select(st.col("a").isfinite())
+        a
+        [|b1]
+        -------
+        True
+        False
+        False
+        """
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isfinite)))
 
     def isinf(self) -> Expr:
+        """
+        Get a boolean array of whether the elements are infinite.
+
+        Examples
+        --------
+        >>> import structured_array as st
+        >>> arr = st.array({"a": [1, np.nan, np.inf]})
+        >>> arr.select(st.col("a").isinf())
+        a
+        [|b1]
+        -------
+        False
+        False
+        True
+        """
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isinf)))
 
-    def isfinite(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.isfinite)))
-
     def isposinf(self) -> Expr:
+        """Get a boolean array of whether the elements are positive infinity."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isposinf)))
 
     def isneginf(self) -> Expr:
+        """Get a boolean array of whether the elements are negative infinity."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isneginf)))
 
     def isreal(self) -> Expr:
+        """Get a boolean array of whether the elements are real."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isreal)))
 
     def iscomplex(self) -> Expr:
+        """Get a boolean array of whether the elements are complex."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.iscomplex)))
 
     def shape(self) -> Expr:

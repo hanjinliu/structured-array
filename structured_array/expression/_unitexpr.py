@@ -132,10 +132,31 @@ class ArangeExpr(UnitExpr):
         else:
             start = self.start
         if self.stop is None:
-            stop = self.start + num * self.step
+            stop = start + num * self.step
         else:
             stop = self.stop
-        out = np.arange(start, stop, self.step, dtype=self.dtype)
-        if out.size != num:
+        ar = np.arange(start, stop, self.step, dtype=self.dtype)
+        if ar.size != num:
             raise ValueError("Size mismatch")
+        out = np.empty(num, dtype=[("arange", ar.dtype)])
+        out["arange"] = ar
+        return out
+
+
+class LinspaceExpr(UnitExpr):
+    def __init__(self, start, stop, endpoint=True, dtype=None) -> None:
+        self.start = start
+        self.stop = stop
+        self.endpoint = endpoint
+        self.dtype = dtype
+
+    def apply(self, arr: np.ndarray) -> np.ndarray:
+        num = arr.shape[0]
+        ar = np.linspace(
+            self.start, self.stop, num, endpoint=self.endpoint, dtype=self.dtype
+        )
+        if ar.size != num:
+            raise ValueError("Size mismatch")
+        out = np.empty(num, dtype=[("linspace", ar.dtype)])
+        out["linspace"] = ar
         return out

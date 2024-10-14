@@ -100,3 +100,34 @@ def test_rename():
         "A": [[1, 2], [2, 3], [3, 2]],
         "b": [4, 5, 6],
     }
+
+
+def test_arange():
+    df = st.array({"a": [0, 0, 0]})
+    assert df.with_columns(st.arange()).to_dict(asarray=False) == {
+        "a": [0, 0, 0],
+        "arange": [0, 1, 2],
+    }
+    assert df.with_columns(b=st.arange(stop=10)).to_dict(asarray=False) == {
+        "a": [0, 0, 0],
+        "b": [7, 8, 9],
+    }
+    assert df.with_columns(st.arange(start=1)).to_dict(asarray=False) == {
+        "a": [0, 0, 0],
+        "arange": [1, 2, 3],
+    }
+    assert df.with_columns(st.arange(step=2)).to_dict(asarray=False) == {
+        "a": [0, 0, 0],
+        "arange": [0, 2, 4],
+    }
+
+
+def test_linspace():
+    df = st.array({"a": [0, 0, 0]})
+    assert df.with_columns(st.linspace(0, 1)).to_dict(asarray=False) == {
+        "a": [0, 0, 0],
+        "linspace": [0.0, 0.5, 1.0],
+    }
+    assert df.with_columns(st.linspace(0, 3, endpoint=False)).to_dict(
+        asarray=False
+    ) == {"a": [0, 0, 0], "linspace": [0.0, 1.0, 2.0]}

@@ -1,7 +1,7 @@
 import pytest
 import structured_array as st
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_allclose
 
 
 def test_select():
@@ -106,6 +106,12 @@ def test_misc_methods():
     assert df.select(st.col("a").isin([1, 3])).to_dict(asarray=False) == {
         "a": [True, False, True]
     }
+
+
+def test_degrees():
+    df = st.array({"a": [0, np.pi / 2, np.pi], "b": [0, 45, 90]})
+    assert_allclose(df.select(st.col("a").degrees())["a"], [0, 90, 180])
+    assert_allclose(df.select(st.col("b").radians())["b"], [0, np.pi / 4, np.pi / 2])
 
 
 def test_unique():

@@ -51,9 +51,39 @@ class ArrayNamespace(ExprNamespace):
         return self._expr().__getitem__(_key)
 
     def min(self, axis: AxisType = None) -> Expr:
+        """
+        Element-wise minimum of a nested column.
+
+        Examples
+        --------
+        >>> import structured_array as st
+        >>> arr = st.array({"a": [[1, 2], [3, 2], [5, 6]]})
+        >>> arr.select(st.col("a").arr.min())
+        a
+        [<i8]
+        -------
+        1
+        2
+        5
+        """
         return self._new(self._op().compose(ArrayUfuncExpr(np.min, axis=axis)))
 
     def max(self, axis: AxisType = None) -> Expr:
+        """
+        Element-wise maximum of a nested column.
+
+        Examples
+        --------
+        >>> import structured_array as st
+        >>> arr = st.array({"a": [[1, 2], [3, 2], [5, 6]]})
+        >>> arr.select(st.col("a").arr.max())
+        a
+        [<i8]
+        -------
+        2
+        3
+        6
+        """
         return self._new(self._op().compose(ArrayUfuncExpr(np.max, axis=axis)))
 
     def sum(self, axis: AxisType = None) -> Expr:
