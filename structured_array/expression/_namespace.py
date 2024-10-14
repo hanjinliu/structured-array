@@ -18,10 +18,13 @@ class ExprNamespace:
             return self
         return self.__class__(obj)
 
-    def _op(self) -> UnitExpr:
+    def _expr(self) -> Expr:
         if self._expr_or_none is None:
             raise AttributeError("Only Expr instances have this attribute")
-        return self._expr_or_none._op
+        return self._expr_or_none
+
+    def _op(self) -> UnitExpr:
+        return self._expr()._op
 
     @classmethod
     def _new(cls, op: UnitExpr) -> Expr:

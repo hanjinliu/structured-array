@@ -43,6 +43,13 @@ class SingleAxisArrayUfuncExpr(_uexp.UfuncExpr):
 
 
 class ArrayNamespace(ExprNamespace):
+    def __getitem__(self, key) -> Expr:
+        if isinstance(key, tuple):
+            _key = (slice(None), *key)
+        else:
+            _key = (slice(None), key)
+        return self._expr().__getitem__(_key)
+
     def min(self, axis: AxisType = None) -> Expr:
         return self._new(self._op().compose(ArrayUfuncExpr(np.min, axis=axis)))
 

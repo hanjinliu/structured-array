@@ -161,9 +161,10 @@ def test_namespace_arr():
     )
     assert_array_equal(df.select(st.col("a").arr.argmin())["a"], [0, 0, 2])
     assert_array_equal(df.select(st.col("a").arr.argmax())["a"], [2, 2, 0])
+    assert_array_equal(df.select(st.col("a").arr[0])["a"], [1, 2, 3])
 
 
-def test_namespace_arr_axis():
+def test_namespace_arr_2d():
     ar = [
         [[1, 2, 3], [0, 0, 0]],
         [[2, 4, 6], [1, 1, 1]],
@@ -182,6 +183,7 @@ def test_namespace_arr_axis():
     assert_array_equal(
         df.select(st.col("a").arr.argmin(axis=1))["a"], np.argmin(ar, axis=2)
     )
+    assert_array_equal(df.select(st.col("a").arr[0, 1])["a"], [2, 4, 2])
 
 
 def test_namespace_str():
