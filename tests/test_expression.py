@@ -133,6 +133,13 @@ def test_opertors():
     df = st.array({"a": [1, 2, 3]})
     assert df.select(+st.col("a"))["a"].tolist() == [1, 2, 3]
     assert df.select(-st.col("a"))["a"].tolist() == [-1, -2, -3]
+    assert df.select(st.col("a").truediv(2))["a"].tolist() == pytest.approx(
+        [0.5, 1.0, 1.5]
+    )
+    assert df.select(st.col("a").floordiv(2))["a"].tolist() == [0, 1, 1]
+    assert df.select(st.col("a").mod(2))["a"].tolist() == [1, 0, 1]
+    assert df.select(st.col("a").pow(2))["a"].tolist() == [1, 4, 9]
+
     assert df.select(st.col("a").lt(2))["a"].tolist() == [True, False, False]
     assert df.select(st.col("a").le(2))["a"].tolist() == [True, True, False]
     assert df.select(st.col("a").gt(2))["a"].tolist() == [False, False, True]
@@ -179,6 +186,7 @@ def test_math_functions():
     assert_allclose(df.select(st.col("a").log1p())["a"], np.log1p(val))
     assert_allclose(df.select(st.col("a").rint())["a"], np.rint(val))
     assert_allclose(df.select(st.col("a").fix())["a"], np.fix(val))
+    assert_allclose(df.select(st.col("a").sign())["a"], np.sign(val))
 
 
 def test_degrees():
@@ -193,6 +201,19 @@ def test_unique():
     )
     assert df.select(st.col("a").unique()).to_dict(asarray=False) == {"a": [1, 2, 3]}
     assert df.select(st.col("b").unique(axis=0))["b"].shape == (4, 2)
+
+
+def test_concat():
+    df = st.array({"a": [[1, 1], [2, 2]], "b": [[3, 3], [4, 4]]})
+    assert df.select(st.col("a").concat(st.col("b")))["a"].tolist() == [
+        [1, 1, 3, 3],
+        [2, 2, 4, 4],
+    ]
+
+
+def test_shape():
+    df = st.array({"a": [[1, 2, 3], [2, 2, 2]]})
+    assert df.select(st.col("a").shape())[0, 0].tolist() == [2, 3]
 
 
 def test_is_xx_methods():

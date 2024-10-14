@@ -1,6 +1,6 @@
 from __future__ import annotations
 import operator
-from typing import Any, Literal, Sequence
+from typing import Any, Literal
 
 import numpy as np
 from structured_array.expression import _unitexpr as _uexp
@@ -74,6 +74,12 @@ class Expr:
     def pow(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.pow))
 
+    def mod(self, other: Any) -> Expr:
+        return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.mod))
+
+    def floordiv(self, other: Any) -> Expr:
+        return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.floordiv))
+
     def eq(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.eq))
 
@@ -112,6 +118,8 @@ class Expr:
     __sub__ = sub
     __mul__ = mul
     __truediv__ = truediv
+    __mod__ = mod
+    __floordiv__ = floordiv
     __pow__ = pow
     __eq__ = eq
     __ne__ = ne
@@ -380,14 +388,14 @@ class Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(_shape)))
 
     def concat(
-        self, columns: IntoExpr | Sequence[IntoExpr], *more_columns: IntoExpr
+        self,
+        *columns: IntoExpr,
     ) -> Expr:
+        """Concatenate the column with others."""
         from structured_array._normalize import into_expr_multi
 
-        exprs = into_expr_multi(columns, *more_columns)
-        return Expr(
-            self._op.compose(_uexp.NArgExpr([expr._op for expr in exprs], _concat))
-        )
+        exprs = into_expr_multi(*columns)
+        return Expr(_uexp.NArgExpr([self._op] + [expr._op for expr in exprs], _concat))
 
     def __getitem__(self, key) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(operator.getitem, key)))
@@ -398,7 +406,7 @@ def _concat(*arr):
 
 
 def _shape(arr: np.ndarray):
-    return np.array(arr.shape, dtype=int)
+    return np.array([arr.shape], dtype=int)
 
 
 def _size(arr: np.ndarray):

@@ -72,12 +72,19 @@ def test_array_input_with_schema():
     assert arr.to_dict(asarray=False) == {"a": [0, 2, 4], "bb": [1, 3, 5]}
 
 
+def test_empty_input():
+    arr = st.array({})
+    assert arr.to_dict(asarray=False) == {}
+
+
 def test_schema():
     d = {"a": [1, 2, 3], "b": [4, 5, 6]}
     arr = st.array(d, schema={"a": np.uint16, "b": np.float32})
     assert arr.schema == {"a": np.uint16, "b": np.float32}
     arr = st.array(d, schema=[("a", "uint16"), ("b", "float32")])
     assert arr.schema == {"a": np.uint16, "b": np.float32}
+    with pytest.raises(ValueError):
+        st.array(d, schema={"a": np.uint16, "c": np.float32})
 
 
 def test_pandas():
@@ -87,6 +94,9 @@ def test_pandas():
     df = pd.DataFrame(d)
     arr = st.array(df)
     assert arr.to_dict(asarray=False) == pytest.approx(d)
+    st.array(df, schema={"a": np.uint16, "b": np.float32})
+    with pytest.raises(ValueError):
+        st.array(df, schema={"a": np.uint16, "c": np.float32})
 
 
 def test_polars():
@@ -96,6 +106,9 @@ def test_polars():
     df = pl.DataFrame(d)
     arr = st.array(df)
     assert arr.to_dict(asarray=False) == pytest.approx(d)
+    st.array(df, schema={"a": np.uint16, "b": np.float32})
+    with pytest.raises(ValueError):
+        st.array(df, schema={"a": np.uint16, "c": np.float32})
 
 
 def test_io(tmp_path: Path):
