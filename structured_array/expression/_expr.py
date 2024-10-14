@@ -29,6 +29,14 @@ class Expr:
     def cast(self, dtype) -> Expr:
         return Expr(self._op.compose(_uexp.CastExpr(dtype)))
 
+    def first(self) -> Expr:
+        """Expression that selects the first element of the array."""
+        return Expr(self._op.compose(_uexp.UfuncExpr(operator.getitem, 0)))
+
+    def last(self) -> Expr:
+        """Expression that selects the last element of the array."""
+        return Expr(self._op.compose(_uexp.UfuncExpr(operator.getitem, -1)))
+
     def __neg__(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(operator.neg)))
 
@@ -281,13 +289,15 @@ class Expr:
         from structured_array._normalize import into_expr_multi
 
         exprs = into_expr_multi(columns, *more_columns)
-        return Expr(_uexp.NArgExpr([expr._op for expr in exprs], _concat))
+        return Expr(
+            self._op.compose(_uexp.NArgExpr([expr._op for expr in exprs], _concat))
+        )
 
     def apply(self, func, *args, **kwargs) -> Expr:
-        return Expr(_uexp.UfuncExpr(func, *args, **kwargs))
+        return Expr(self._op.compose(_uexp.UfuncExpr(func, *args, **kwargs)))
 
     def __getitem__(self, key) -> Expr:
-        return Expr(_uexp.UfuncExpr(operator.getitem, key))
+        return Expr(self._op.compose(_uexp.UfuncExpr(operator.getitem, key)))
 
 
 def _concat(*arr):

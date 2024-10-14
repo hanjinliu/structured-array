@@ -5,12 +5,12 @@ from numpy.testing import assert_array_equal
 
 
 def test_select():
-    df = st.array({"a": [1, 2, 3], "b": [4, 5, 6]})
-    st.testing.assert_array_equal(df.select("a"), st.array({"a": [1, 2, 3]}))
+    df = st.array({"col-0": [1, 2, 3], "b": [4, 5, 6]})
+    st.testing.assert_array_equal(df.select("col-0"), st.array({"col-0": [1, 2, 3]}))
     st.testing.assert_array_equal(df.select("b"), st.array({"b": [4, 5, 6]}))
-    st.testing.assert_array_equal(df.select("a", "b"), df)
+    st.testing.assert_array_equal(df.select("col-0", "b"), df)
     st.testing.assert_array_equal(
-        df.select(st.col("a") + 1), st.array({"a": [2, 3, 4]})
+        df.select(st.col("col-0") + 1), st.array({"col-0": [2, 3, 4]})
     )
     st.testing.assert_array_equal(
         df.select(st.col("b") * 2), st.array({"b": [8, 10, 12]})
@@ -18,8 +18,8 @@ def test_select():
 
 
 def test_select_2d():
-    df = st.array({"a": [[1, 2], [2, 3], [3, 4]], "b": [4, 5, 6]})
-    assert_array_equal(df.select("a")["a"], [[1, 2], [2, 3], [3, 4]])
+    df = st.array({"col-0": [[1, 2], [2, 3], [3, 4]], "b": [4, 5, 6]})
+    assert_array_equal(df.select("col-0")["col-0"], [[1, 2], [2, 3], [3, 4]])
 
 
 def test_alias():
