@@ -103,7 +103,7 @@ def test_misc_methods():
     assert df.select(st.col("a").floor()).to_dict(asarray=False) == {"a": [1, 2, 3]}
     assert df.select(st.col("a").round()).to_dict(asarray=False) == {"a": [1, 2, 3]}
     assert df.select(st.col("a").clip(2, 3)).to_dict(asarray=False) == {"a": [2, 2, 3]}
-    assert df.select(st.col("a").isin([1, 3])).to_dict(asarray=False) == {
+    assert df.select(st.col("a").is_in([1, 3])).to_dict(asarray=False) == {
         "a": [True, False, True]
     }
 
@@ -176,6 +176,9 @@ def test_math_functions():
     assert_allclose(df.select(st.col("a").arcsinh())["a"], np.arcsinh(val))
     assert_allclose(df.select(st.col("a").add(2).arccosh())["a"], np.arccosh(val + 2))
     assert_allclose(df.select(st.col("a").arctanh())["a"], np.arctanh(val))
+    assert_allclose(df.select(st.col("a").log1p())["a"], np.log1p(val))
+    assert_allclose(df.select(st.col("a").rint())["a"], np.rint(val))
+    assert_allclose(df.select(st.col("a").fix())["a"], np.fix(val))
 
 
 def test_degrees():
@@ -195,27 +198,27 @@ def test_unique():
 def test_is_xx_methods():
     val = [np.inf, -np.inf, 0, 1, -1, np.nan]
     assert_array_equal(
-        st.array({"a": val}).select(st.col("a").isinf())["a"], np.isinf(val)
+        st.array({"a": val}).select(st.col("a").is_inf())["a"], np.isinf(val)
     )
     assert_array_equal(
-        st.array({"a": val}).select(st.col("a").isposinf())["a"], np.isposinf(val)
+        st.array({"a": val}).select(st.col("a").is_posinf())["a"], np.isposinf(val)
     )
     assert_array_equal(
-        st.array({"a": val}).select(st.col("a").isneginf())["a"], np.isneginf(val)
+        st.array({"a": val}).select(st.col("a").is_neginf())["a"], np.isneginf(val)
     )
     assert_array_equal(
-        st.array({"a": val}).select(st.col("a").isfinite())["a"], np.isfinite(val)
+        st.array({"a": val}).select(st.col("a").is_finite())["a"], np.isfinite(val)
     )
     assert_array_equal(
-        st.array({"a": val}).select(st.col("a").isnan())["a"], np.isnan(val)
+        st.array({"a": val}).select(st.col("a").is_nan())["a"], np.isnan(val)
     )
 
     val = [1, 1j, 1.0, 1.0j, 1.0 + 1.0j]
     assert_array_equal(
-        st.array({"a": val}).select(st.col("a").isreal())["a"], np.isreal(val)
+        st.array({"a": val}).select(st.col("a").is_real())["a"], np.isreal(val)
     )
     assert_array_equal(
-        st.array({"a": val}).select(st.col("a").iscomplex())["a"], np.iscomplex(val)
+        st.array({"a": val}).select(st.col("a").is_complex())["a"], np.iscomplex(val)
     )
 
 
@@ -336,3 +339,20 @@ def test_namespace_str():
     # find
     assert_array_equal(df.select(st.col("a").str.find("b"))["a"], [1, 2, 1, 0])
     assert_array_equal(df.select(st.col("a").str.rfind("b"))["a"], [1, 2, 2, 2])
+
+    # is_xx
+    val = ["ab", "1", "a1", "1.0", "1.0a"]
+    df = st.array({"a": val})
+    assert_array_equal(df.select(st.col("a").str.is_alnum())["a"], np.char.isalnum(val))
+    assert_array_equal(df.select(st.col("a").str.is_alpha())["a"], np.char.isalpha(val))
+    assert_array_equal(df.select(st.col("a").str.is_digit())["a"], np.char.isdigit(val))
+    assert_array_equal(df.select(st.col("a").str.is_lower())["a"], np.char.islower(val))
+    assert_array_equal(df.select(st.col("a").str.is_upper())["a"], np.char.isupper(val))
+    assert_array_equal(
+        df.select(st.col("a").str.is_numeric())["a"], np.char.isnumeric(val)
+    )
+    assert_array_equal(df.select(st.col("a").str.is_space())["a"], np.char.isspace(val))
+    assert_array_equal(df.select(st.col("a").str.is_title())["a"], np.char.istitle(val))
+    assert_array_equal(
+        df.select(st.col("a").str.is_decimal())["a"], np.char.isdecimal(val)
+    )

@@ -100,32 +100,38 @@ class StrNamespace(ExprNamespace):
             self._op().compose(_uexp.UfuncExpr(np.char.endswith, suffix, start, end))
         )
 
-    def isalnum(self) -> Expr:
+    def is_alnum(self) -> Expr:
+        """Return True if an element is alphabetic or numeric character."""
         return self._new(self._op().compose(_uexp.UfuncExpr(np.char.isalnum)))
 
-    def isalpha(self) -> Expr:
+    def is_alpha(self) -> Expr:
+        """Return True if an element is alphabetic character."""
         return self._new(self._op().compose(_uexp.UfuncExpr(np.char.isalpha)))
 
-    def isdigit(self) -> Expr:
+    def is_digit(self) -> Expr:
+        """Return True if an element is digit character."""
         return self._new(self._op().compose(_uexp.UfuncExpr(np.char.isdigit)))
 
-    def isnumeric(self) -> Expr:
+    def is_numeric(self) -> Expr:
+        """Return True if an element is numeric character."""
         return self._new(self._op().compose(_uexp.UfuncExpr(np.char.isnumeric)))
 
-    def isspace(self) -> Expr:
+    def is_space(self) -> Expr:
+        """Return True if an element is whitespace character."""
         return self._new(self._op().compose(_uexp.UfuncExpr(np.char.isspace)))
 
-    def islower(self) -> Expr:
+    def is_lower(self) -> Expr:
+        """Return True if an element is lowercase character."""
         return self._new(self._op().compose(_uexp.UfuncExpr(np.char.islower)))
 
-    def isupper(self) -> Expr:
+    def is_upper(self) -> Expr:
+        """Return True if an element is uppercase character."""
         return self._new(self._op().compose(_uexp.UfuncExpr(np.char.isupper)))
 
-    def istitle(self) -> Expr:
+    def is_title(self) -> Expr:
+        """Return True if an element is titlecase character."""
         return self._new(self._op().compose(_uexp.UfuncExpr(np.char.istitle)))
 
-    def isdecimal(self) -> Expr:
+    def is_decimal(self) -> Expr:
+        """Return True if an element is decimal character."""
         return self._new(self._op().compose(_uexp.UfuncExpr(np.char.isdecimal)))
-
-    def translate(self, table) -> Expr:
-        return self._new(self._op().compose(_uexp.UfuncExpr(np.char.translate, table)))

@@ -163,68 +163,77 @@ class Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.exp)))
 
     def log(self) -> Expr:
+        """Compute the natural logarithm."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.log)))
 
     def log2(self) -> Expr:
+        """Compute the base-2 logarithm."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.log2)))
 
     def log10(self) -> Expr:
+        """Compute the base-10 logarithm."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.log10)))
 
     def log1p(self) -> Expr:
+        """Compute the natural logarithm of input + 1."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.log1p)))
 
-    def expm1(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.expm1)))
-
     def square(self) -> Expr:
+        """Compute the square of the values."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.square)))
 
     def cbrt(self) -> Expr:
+        """Compute the cube root of the values."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.cbrt)))
 
     def reciprocal(self) -> Expr:
+        """Compute the reciprocal of the values."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.reciprocal)))
 
-    def negative(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.negative)))
-
-    def absolute(self) -> Expr:
+    def abs(self) -> Expr:
+        """Compute the absolute values."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.absolute)))
 
     def sign(self) -> Expr:
+        """Compute the sign of the values."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.sign)))
 
     def rint(self) -> Expr:
+        """Round the values to the nearest integer."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.rint)))
 
     def fix(self) -> Expr:
+        """Round the values towards zero."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.fix)))
 
-    def abs(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.abs)))
-
     def sqrt(self) -> Expr:
+        """Compute the square root of the values."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.sqrt)))
 
     def ceil(self) -> Expr:
+        """Round the values to the smallest integer not less than the values."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.ceil)))
 
     def floor(self) -> Expr:
+        """Round the values to the largest integer not greater than the values."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.floor)))
 
-    def round(self, decimals=0) -> Expr:
+    def round(self, decimals: int = 0) -> Expr:
+        """Round the values to the given number of decimals."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.round, decimals=decimals)))
 
-    def clip(self, a_min, a_max) -> Expr:
+    def clip(self, lower: Any, upper: Any) -> Expr:
+        """Clip the values to be within the given range."""
         return Expr(
-            self._op.compose(_uexp.UfuncExpr(np.clip, a_min=a_min, a_max=a_max))
+            self._op.compose(_uexp.UfuncExpr(np.clip, a_min=lower, a_max=upper))
         )
 
     def degrees(self) -> Expr:
+        """Convert angles from radians to degrees."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.degrees)))
 
     def radians(self) -> Expr:
+        """Convert angles from degrees to radians."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.radians)))
 
     ##### Aggregation methods ########################################################
@@ -279,7 +288,7 @@ class Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(_size)))
 
     ##### the "isXX" methods ########################################################
-    def isin(self, values) -> Expr:
+    def is_in(self, values) -> Expr:
         """
         Get a boolean array of whether the elements are in `values`.
 
@@ -287,7 +296,7 @@ class Expr:
         --------
         >>> import structured_array as st
         >>> arr = st.array({"a": [1, 2, 3]})
-        >>> arr.select(st.col("a").isin([1, 3]))
+        >>> arr.select(st.col("a").is_in([1, 3]))
         a
         [|b1]
         -------
@@ -297,7 +306,7 @@ class Expr:
         """
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isin, values)))
 
-    def isnan(self) -> Expr:
+    def is_nan(self) -> Expr:
         """
         Get a boolean array of whether the elements are np.nan.
 
@@ -305,7 +314,7 @@ class Expr:
         --------
         >>> import structured_array as st
         >>> arr = st.array({"a": [1, np.nan, 3]})
-        >>> arr.select(st.col("a").isnan())
+        >>> arr.select(st.col("a").is_nan())
         a
         [|b1]
         -------
@@ -315,7 +324,7 @@ class Expr:
         """
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isnan)))
 
-    def isfinite(self) -> Expr:
+    def is_finite(self) -> Expr:
         """
         Get a boolean array of whether the elements are finite.
 
@@ -323,7 +332,7 @@ class Expr:
         --------
         >>> import structured_array as st
         >>> arr = st.array({"a": [1, np.nan, np.inf]})
-        >>> arr.select(st.col("a").isfinite())
+        >>> arr.select(st.col("a").is_finite())
         a
         [|b1]
         -------
@@ -333,7 +342,7 @@ class Expr:
         """
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isfinite)))
 
-    def isinf(self) -> Expr:
+    def is_inf(self) -> Expr:
         """
         Get a boolean array of whether the elements are infinite.
 
@@ -341,7 +350,7 @@ class Expr:
         --------
         >>> import structured_array as st
         >>> arr = st.array({"a": [1, np.nan, np.inf]})
-        >>> arr.select(st.col("a").isinf())
+        >>> arr.select(st.col("a").is_inf())
         a
         [|b1]
         -------
@@ -351,19 +360,19 @@ class Expr:
         """
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isinf)))
 
-    def isposinf(self) -> Expr:
+    def is_posinf(self) -> Expr:
         """Get a boolean array of whether the elements are positive infinity."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isposinf)))
 
-    def isneginf(self) -> Expr:
+    def is_neginf(self) -> Expr:
         """Get a boolean array of whether the elements are negative infinity."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isneginf)))
 
-    def isreal(self) -> Expr:
+    def is_real(self) -> Expr:
         """Get a boolean array of whether the elements are real."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isreal)))
 
-    def iscomplex(self) -> Expr:
+    def is_complex(self) -> Expr:
         """Get a boolean array of whether the elements are complex."""
         return Expr(self._op.compose(_uexp.UfuncExpr(np.iscomplex)))
 
