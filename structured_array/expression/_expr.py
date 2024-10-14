@@ -391,7 +391,18 @@ class Expr:
         self,
         *columns: IntoExpr,
     ) -> Expr:
-        """Concatenate the column with others."""
+        """
+        Concatenate the column with others.
+
+        Examples
+        --------
+        >>> import structured_array as st
+        >>> arr = st.array({"a": [[1], [2], [3]], "b": [[4, 4], [5, 5], [6, 6]]})
+        >>> arr.select(st.col("a").concat(st.col("b")))["a"]
+        array([[1, 4, 4],
+               [2, 5, 5],
+               [3, 6, 6]])
+        """
         from structured_array._normalize import into_expr_multi
 
         exprs = into_expr_multi(*columns)

@@ -1,4 +1,6 @@
 import numpy as np
+from numpy.testing import assert_allclose
+import pytest
 import structured_array as st
 
 
@@ -78,6 +80,7 @@ def test_getitem():
     assert list(df[1, 1:2]) == [5]
     assert list(df[1:3, "a"]) == [2, 3]
     assert df[1:3, 1:2].to_dict(asarray=False) == {"b": [5, 6]}
+    assert df[["b", "a"]].to_dict(asarray=False) == {"b": [4, 5, 6], "a": [1, 2, 3]}
 
 
 def test_misc():
@@ -131,3 +134,17 @@ def test_linspace():
     assert df.with_columns(st.linspace(0, 3, endpoint=False)).to_dict(
         asarray=False
     ) == {"a": [0, 0, 0], "linspace": [0.0, 1.0, 2.0]}
+
+
+def test_unstructure():
+    assert_allclose(
+        st.array({"a": [1, 2, 3], "b": [4, 5, 6]}).to_unstructured(),
+        np.array([(1, 4), (2, 5), (3, 6)], dtype=np.int64),
+    )
+    with pytest.raises(ValueError):
+        st.array({"a": [1, 2, 3], "b": [4.0, 5.0, 6.0]}).to_unstructured()
+    assert_allclose(
+        st.array({"a": [1, 2, 3], "b": [4.0, 5.0, 6.0]}).to_unstructured(np.float32),
+        np.array([(1, 4), (2, 5), (3, 6)], dtype=np.float32),
+    )
+    st.array({}).to_unstructured()

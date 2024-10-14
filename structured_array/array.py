@@ -215,6 +215,23 @@ class StructuredArray:
         ]
         return self._new_structured_array(arrs, allow_duplicates=True)
 
+    def to_unstructured(self, dtype=None) -> np.ndarray:
+        """Return the non-structured array."""
+        all_dtypes = list(set(self.dtypes))
+        if len(all_dtypes) == 0:
+            return self._arr.view(np.float64)
+        if len(all_dtypes) > 1:
+            if dtype is None:
+                raise ValueError(
+                    "Cannot unstructure array with multiple dtypes. Explicitly specify "
+                    "`dtype` to cast the type."
+                )
+            out = np.empty(self.shape, dtype=dtype)
+            for i, name in enumerate(self.columns):
+                out[:, i] = self._arr[name].astype(dtype)
+            return out
+        return self._arr.view(dtype=all_dtypes[0]).reshape(self.shape)
+
     def __repr__(self) -> str:
         many_columns = len(self.columns) > 1
 
@@ -292,7 +309,7 @@ class StructuredArray:
         elif isinstance(key, list):
             if any(not isinstance(k, str) for k in key):
                 raise TypeError("If list is given, all elements must be str")
-            arrs = [self._arr[k] for k in key]
+            arrs = [self._arr[[k]] for k in key]
             return self._new_structured_array(arrs)
         elif isinstance(key, tuple):
             if len(key) == 0:
