@@ -108,6 +108,76 @@ def test_misc_methods():
     }
 
 
+def test_opertors():
+    df = st.array({"a": [True, False, True, False], "b": [True, True, False, False]})
+    assert df.select(st.col("a").not_())["a"].tolist() == [False, True, False, True]
+    assert df.select(st.col("a").and_(st.col("b")))["a"].tolist() == [
+        True,
+        False,
+        False,
+        False,
+    ]
+    assert df.select(st.col("a").or_(st.col("b")))["a"].tolist() == [
+        True,
+        True,
+        True,
+        False,
+    ]
+    assert df.select(st.col("a").xor(st.col("b")))["a"].tolist() == [
+        False,
+        True,
+        True,
+        False,
+    ]
+
+    df = st.array({"a": [1, 2, 3]})
+    assert df.select(+st.col("a"))["a"].tolist() == [1, 2, 3]
+    assert df.select(-st.col("a"))["a"].tolist() == [-1, -2, -3]
+    assert df.select(st.col("a").lt(2))["a"].tolist() == [True, False, False]
+    assert df.select(st.col("a").le(2))["a"].tolist() == [True, True, False]
+    assert df.select(st.col("a").gt(2))["a"].tolist() == [False, False, True]
+    assert df.select(st.col("a").ge(2))["a"].tolist() == [False, True, True]
+    assert df.select(st.col("a").eq(2))["a"].tolist() == [False, True, False]
+    assert df.select(st.col("a").ne(2))["a"].tolist() == [True, False, True]
+    assert df.select(st.col("a").is_between(1, 2))["a"].tolist() == [True, True, False]
+    assert df.select(st.col("a").is_between(1, 2, closed="left"))["a"].tolist() == [
+        True,
+        False,
+        False,
+    ]
+    assert df.select(st.col("a").is_between(1, 2, closed="right"))["a"].tolist() == [
+        False,
+        True,
+        False,
+    ]
+
+
+def test_math_functions():
+    val = np.array([0.3, 0.6, 0.9])
+    df = st.array({"a": val})
+    assert_allclose(df.select(st.col("a").abs())["a"], val)
+    assert_allclose(df.select(st.col("a").exp())["a"], np.exp(val))
+    assert_allclose(df.select(st.col("a").log())["a"], np.log(val))
+    assert_allclose(df.select(st.col("a").log2())["a"], np.log2(val))
+    assert_allclose(df.select(st.col("a").log10())["a"], np.log10(val))
+    assert_allclose(df.select(st.col("a").sqrt())["a"], np.sqrt(val))
+    assert_allclose(df.select(st.col("a").square())["a"], np.square(val))
+    assert_allclose(df.select(st.col("a").cbrt())["a"], np.cbrt(val))
+    assert_allclose(df.select(st.col("a").reciprocal())["a"], np.reciprocal(val))
+    assert_allclose(df.select(st.col("a").sin())["a"], np.sin(val))
+    assert_allclose(df.select(st.col("a").cos())["a"], np.cos(val))
+    assert_allclose(df.select(st.col("a").tan())["a"], np.tan(val))
+    assert_allclose(df.select(st.col("a").arcsin())["a"], np.arcsin(val))
+    assert_allclose(df.select(st.col("a").arccos())["a"], np.arccos(val))
+    assert_allclose(df.select(st.col("a").arctan())["a"], np.arctan(val))
+    assert_allclose(df.select(st.col("a").sinh())["a"], np.sinh(val))
+    assert_allclose(df.select(st.col("a").cosh())["a"], np.cosh(val))
+    assert_allclose(df.select(st.col("a").tanh())["a"], np.tanh(val))
+    assert_allclose(df.select(st.col("a").arcsinh())["a"], np.arcsinh(val))
+    assert_allclose(df.select(st.col("a").add(2).arccosh())["a"], np.arccosh(val + 2))
+    assert_allclose(df.select(st.col("a").arctanh())["a"], np.arctanh(val))
+
+
 def test_degrees():
     df = st.array({"a": [0, np.pi / 2, np.pi], "b": [0, 45, 90]})
     assert_allclose(df.select(st.col("a").degrees())["a"], [0, 90, 180])
@@ -132,6 +202,12 @@ def test_is_xx_methods():
     )
     assert_array_equal(
         st.array({"a": val}).select(st.col("a").isneginf())["a"], np.isneginf(val)
+    )
+    assert_array_equal(
+        st.array({"a": val}).select(st.col("a").isfinite())["a"], np.isfinite(val)
+    )
+    assert_array_equal(
+        st.array({"a": val}).select(st.col("a").isnan())["a"], np.isnan(val)
     )
 
     val = [1, 1j, 1.0, 1.0j, 1.0 + 1.0j]

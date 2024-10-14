@@ -53,13 +53,12 @@ extra-dependencies = [
 check = "mypy --install-types --non-interactive {args:structured_array tests}"
 
 [tool.coverage.run]
-source_pkgs = ["structured_array", "tests"]
+source_pkgs = ["structured_array"]
 branch = true
 parallel = true
 
 [tool.coverage.paths]
 structured_array = ["structured_array", "*/structured-array/structured_array"]
-tests = ["tests", "*/structured-array/tests"]
 
 [tool.coverage.report]
 exclude_lines = [

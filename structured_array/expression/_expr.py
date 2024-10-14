@@ -37,22 +37,26 @@ class Expr:
         """Expression that selects the last element of the array."""
         return Expr(self._op.compose(_uexp.UfuncExpr(operator.getitem, -1)))
 
-    def __neg__(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(operator.neg)))
-
     def __pos__(self) -> Expr:
         return self
 
-    def __and__(self, other: Expr) -> Expr:
+    def neg(self) -> Expr:
+        """Negate the values."""
+        return Expr(self._op.compose(_uexp.UfuncExpr(operator.neg)))
+
+    def and_(self, other: Expr) -> Expr:
+        """Logical AND of the expressions."""
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.and_))
 
-    def __or__(self, other: Expr) -> Expr:
+    def or_(self, other: Expr) -> Expr:
+        """Logical OR of the expressions."""
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.or_))
 
-    def __invert__(self) -> Expr:
+    def not_(self) -> Expr:
+        """Logical NOT of the expressions."""
         return Expr(self._op.compose(_uexp.UfuncExpr(operator.inv)))
 
-    def __xor__(self, other: Expr) -> Expr:
+    def xor(self, other: Expr) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.xor))
 
     def add(self, other: Any) -> Expr:
@@ -88,6 +92,22 @@ class Expr:
     def ge(self, other: Any) -> Expr:
         return Expr(_uexp.NArgExpr([self._op, _to_unit_expr(other)], operator.ge))
 
+    def is_between(
+        self,
+        lower: Any,
+        upper: Any,
+        closed: Literal["left", "right", "both"] = "both",
+    ) -> Expr:
+        """Expression that checks if the values are between `lower` and `upper`."""
+        left = self.ge(lower) if closed in ("left", "both") else self.gt(lower)
+        right = self.le(upper) if closed in ("right", "both") else self.lt(upper)
+        return left & right
+
+    __neg__ = neg
+    __and__ = and_
+    __or__ = or_
+    __invert__ = not_
+    __xor__ = xor
     __add__ = add
     __sub__ = sub
     __mul__ = mul
