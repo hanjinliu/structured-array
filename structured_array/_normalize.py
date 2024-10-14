@@ -14,7 +14,7 @@ def into_expr(value: IntoExpr) -> Expr:
     from structured_array.expression import Expr, SelectExpr
 
     if isinstance(value, str):
-        return Expr(SelectExpr(value))
+        return Expr(SelectExpr([value]))
     elif isinstance(value, Expr):
         return value
     else:

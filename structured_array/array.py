@@ -216,15 +216,22 @@ class StructuredArray:
         return self._new_structured_array(arrs, allow_duplicates=True)
 
     def __repr__(self) -> str:
+        many_columns = len(self.columns) > 1
+
         def _repr(a, name: str):
             if isinstance(a, np.ndarray):
                 return f"{a.shape!r} array"
             if isinstance(a, (str, bytes)):
                 s = str(a)
                 thresh = max(10, len(name) + 2)
-                if len(s) > thresh:
+                if len(s) > thresh and many_columns:
                     return f"{s[:thresh-1]}…"
                 return s
+            if isinstance(a, (int, np.integer)):
+                a_str = str(a)
+                if len(a_str) > 10 and many_columns:
+                    return a_str[:10] + "…"
+                return a_str
             return str(a)
 
         def _iter_short(a: np.ndarray):
@@ -235,11 +242,26 @@ class StructuredArray:
                 yield "…"
                 yield from a[-5:]
 
-        columns = [
-            [_repr(_a, name) for _a in _iter_short(self[name])] for name in self.columns
-        ]
         dtype_str = [v[1] for v in self._arr.dtype.descr]
-        keys = [f"{name}\n[{dtype}]" for name, dtype in zip(self.columns, dtype_str)]
+        if len(dtype_str) > 6:
+            columns = [
+                [_repr(_a, name) for _a in _iter_short(self[name])]
+                for name in self.columns[:6]
+            ]
+            keys = [
+                f"{name}\n[{dtype}]"
+                for name, dtype in zip(self.columns[:6], dtype_str[:6])
+            ]
+            keys.append("…")
+            columns.append(["…"] * len(columns[0]))
+        else:
+            columns = [
+                [_repr(_a, name) for _a in _iter_short(self[name])]
+                for name in self.columns
+            ]
+            keys = [
+                f"{name}\n[{dtype}]" for name, dtype in zip(self.columns, dtype_str)
+            ]
         return tabulate(
             dict(zip(keys, columns)), headers="keys", stralign="left", numalign="left"
         )
@@ -306,6 +328,9 @@ class StructuredArray:
 
     def __contains__(self, key: str) -> bool:
         return key in self.columns
+
+    def _ipython_key_completions_(self) -> list[str]:  # pragma: no cover
+        return list(self.columns)
 
     def _new_structured_array(
         self, arrs: list[np.ndarray], allow_duplicates: bool = False

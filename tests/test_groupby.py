@@ -26,3 +26,15 @@ def test_agg():
     assert df.group_by("a").agg(st.col("b").max().alias("max")).to_dict(
         asarray=False
     ) == {"a": [1, 2], "max": [6, 7]}
+    assert df.group_by("a").agg(st.col("b").first()).to_dict(asarray=False) == {
+        "a": [1, 2],
+        "b": [4, 5],
+    }
+    assert df.group_by("a").agg(st.col("b").last()).to_dict(asarray=False) == {
+        "a": [1, 2],
+        "b": [6, 7],
+    }
+    assert df.group_by("a").agg(st.col("b")[1]).to_dict(asarray=False) == {
+        "a": [1, 2],
+        "b": [6, 7],
+    }
