@@ -293,9 +293,6 @@ class Expr:
             self._op.compose(_uexp.NArgExpr([expr._op for expr in exprs], _concat))
         )
 
-    def apply(self, func, *args, **kwargs) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(func, *args, **kwargs)))
-
     def __getitem__(self, key) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(operator.getitem, key)))
 

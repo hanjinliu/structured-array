@@ -50,6 +50,22 @@ def test_repr():
     )
     repr(df)
     repr(st.array({"a": np.arange(30)}))
+    repr(
+        st.array(
+            {
+                "aaaaaaaaaaaaaaaaa": np.arange(-10, 10, dtype=np.int64) * 1e10,
+                "b": np.zeros(20),
+                "c": ["a" * i for i in range(20)],
+                "d": np.zeros(20),
+                "e": np.zeros(20),
+                "f": np.zeros(20),
+                "g": np.zeros(20),
+                "h": np.zeros(20),
+                "i": np.zeros(20),
+                "12345678": np.zeros(20),
+            }
+        )
+    )
 
 
 def test_getitem():

@@ -329,6 +329,9 @@ class StructuredArray:
     def __contains__(self, key: str) -> bool:
         return key in self.columns
 
+    def _ipython_key_completions_(self) -> list[str]:  # pragma: no cover
+        return list(self.columns)
+
     def _new_structured_array(
         self, arrs: list[np.ndarray], allow_duplicates: bool = False
     ) -> Self:

@@ -34,3 +34,7 @@ def test_agg():
         "a": [1, 2],
         "b": [6, 7],
     }
+    assert df.group_by("a").agg(st.col("b")[1]).to_dict(asarray=False) == {
+        "a": [1, 2],
+        "b": [6, 7],
+    }
