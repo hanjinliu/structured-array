@@ -1,9 +1,11 @@
 from __future__ import annotations
 import operator
-from typing import Any, Sequence
+from typing import Any, Literal, Sequence
 
 import numpy as np
 from structured_array.expression import _unitexpr as _uexp
+from structured_array.expression._array import ArrayNamespace
+from structured_array.expression._char import StrNamespace
 from structured_array.typing import IntoExpr
 
 
@@ -14,7 +16,14 @@ class Expr:
     def _apply_expr(self, arr: np.ndarray) -> np.ndarray:
         return self._op.apply(arr)
 
+    arr = ArrayNamespace()
+    """Namespace for element-wise operations on arrays"""
+
+    str = StrNamespace()
+    """Namespace for string operations"""
+
     def alias(self, alias: str) -> Expr:
+        """Expression that change the column name."""
         return Expr(self._op.compose(_uexp.AliasExpr(alias)))
 
     def cast(self, dtype) -> Expr:
@@ -185,44 +194,52 @@ class Expr:
         )
 
     ##### Aggregation methods ########################################################
-    def min(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.min, axis=axis)))
+    def min(self, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.min, axis=axis)))
 
-    def max(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.max, axis=axis)))
+    def max(self, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.max, axis=axis)))
 
-    def sum(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.sum, axis=axis)))
+    def sum(self, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.sum, axis=axis)))
 
-    def mean(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.mean, axis=axis)))
+    def mean(self, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.mean, axis=axis)))
 
-    def std(self, axis=None, ddof: int = 0) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.std, axis=axis, ddof=ddof)))
+    def std(self, axis: Literal[None, 0] = None, ddof: int = 0) -> Expr:
+        return Expr(
+            self._op.compose(_uexp.UfuncExpr.from_axis(np.std, axis=axis, ddof=ddof))
+        )
 
-    def var(self, axis=None, ddof: int = 0) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.var, axis=axis, ddof=ddof)))
+    def var(self, axis: Literal[None, 0] = None, ddof: int = 0) -> Expr:
+        return Expr(
+            self._op.compose(_uexp.UfuncExpr.from_axis(np.var, axis=axis, ddof=ddof))
+        )
 
-    def median(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.median, axis=axis)))
+    def median(self, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.median, axis=axis)))
 
-    def percentile(self, q, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.percentile, q, axis=axis)))
+    def percentile(self, q, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(
+            self._op.compose(_uexp.UfuncExpr.from_axis(np.percentile, q=q, axis=axis))
+        )
 
-    def quantile(self, q, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.quantile, q, axis=axis)))
+    def quantile(self, q, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(
+            self._op.compose(_uexp.UfuncExpr.from_axis(np.quantile, q=q, axis=axis))
+        )
 
-    def all(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.all, axis=axis)))
+    def all(self, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.all, axis=axis)))
 
-    def any(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.any, axis=axis)))
+    def any(self, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.any, axis=axis)))
 
-    def argmin(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.argmin, axis=axis)))
+    def argmin(self, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.argmin, axis=axis)))
 
-    def argmax(self, axis=None) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.argmax, axis=axis)))
+    def argmax(self, axis: Literal[None, 0] = None) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr.from_axis(np.argmax, axis=axis)))
 
     def len(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(_size)))
@@ -233,6 +250,9 @@ class Expr:
 
     def isnan(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isnan)))
+
+    def isfinite(self) -> Expr:
+        return Expr(self._op.compose(_uexp.UfuncExpr(np.isfinite)))
 
     def isinf(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.isinf)))
@@ -251,12 +271,6 @@ class Expr:
 
     def iscomplex(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(np.iscomplex)))
-
-    def isrealobj(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.isrealobj)))
-
-    def iscomplexobj(self) -> Expr:
-        return Expr(self._op.compose(_uexp.UfuncExpr(np.iscomplexobj)))
 
     def shape(self) -> Expr:
         return Expr(self._op.compose(_uexp.UfuncExpr(_shape)))

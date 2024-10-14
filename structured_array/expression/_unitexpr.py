@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import Callable
 import numpy as np
 
 from structured_array._normalize import caster, unstructure, asarray_maybe_nd
@@ -35,7 +36,12 @@ class CompositeExpr(UnitExpr):
 
 
 class UfuncExpr(UnitExpr):
-    def __init__(self, ufunc, *args, **kwargs) -> None:
+    def __init__(
+        self,
+        ufunc: Callable[..., np.ndarray],
+        *args,
+        **kwargs,
+    ) -> None:
         self.ufunc = ufunc
         self.args = args
         self.kwargs = kwargs
@@ -43,6 +49,13 @@ class UfuncExpr(UnitExpr):
     def apply(self, arr: np.ndarray) -> np.ndarray:
         _caster = caster(arr)
         return _caster.uncast(self.ufunc(_caster.cast(arr), *self.args, **self.kwargs))
+
+    @classmethod
+    def from_axis(cls, ufunc: Callable[..., np.ndarray], axis=None, **kwargs):
+        if axis not in (None, 0):
+            raise ValueError("`axis` must be None or 0")
+        keepdims = axis is not None
+        return cls(ufunc, axis=axis, keepdims=keepdims, **kwargs)
 
 
 class NArgExpr(UnitExpr):

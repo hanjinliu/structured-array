@@ -114,3 +114,141 @@ def test_unique():
     )
     assert df.select(st.col("a").unique()).to_dict(asarray=False) == {"a": [1, 2, 3]}
     assert df.select(st.col("b").unique(axis=0))["b"].shape == (4, 2)
+
+
+def test_is_xx_methods():
+    val = [np.inf, -np.inf, 0, 1, -1, np.nan]
+    assert_array_equal(
+        st.array({"a": val}).select(st.col("a").isinf())["a"], np.isinf(val)
+    )
+    assert_array_equal(
+        st.array({"a": val}).select(st.col("a").isposinf())["a"], np.isposinf(val)
+    )
+    assert_array_equal(
+        st.array({"a": val}).select(st.col("a").isneginf())["a"], np.isneginf(val)
+    )
+
+    val = [1, 1j, 1.0, 1.0j, 1.0 + 1.0j]
+    assert_array_equal(
+        st.array({"a": val}).select(st.col("a").isreal())["a"], np.isreal(val)
+    )
+    assert_array_equal(
+        st.array({"a": val}).select(st.col("a").iscomplex())["a"], np.iscomplex(val)
+    )
+
+
+def test_namespace_arr():
+    ar = [[1, 2, 3], [2, 4, 6], [3, 2, 1]]
+    df = st.array({"a": ar})
+    assert_array_equal(df.select(st.col("a").arr.min())["a"], [1, 2, 1])
+    assert_array_equal(df.select(st.col("a").arr.max())["a"], [3, 6, 3])
+    assert_array_equal(df.select(st.col("a").arr.sum())["a"], [6, 12, 6])
+    assert_array_equal(df.select(st.col("a").arr.mean())["a"], [2, 4, 2])
+    assert_array_equal(
+        df.select(st.col("a").arr.std(ddof=0))["a"], np.std(ar, axis=1, ddof=0)
+    )
+    assert_array_equal(
+        df.select(st.col("a").arr.var(ddof=0))["a"], np.var(ar, axis=1, ddof=0)
+    )
+    assert_array_equal(df.select(st.col("a").arr.median())["a"], [2, 4, 2])
+    assert_array_equal(df.select(st.col("a").arr.percentile(50))["a"], [2, 4, 2])
+    assert_array_equal(df.select(st.col("a").arr.quantile(0.5))["a"], [2, 4, 2])
+    assert_array_equal(
+        df.select(st.col("a").lt(4.2).arr.all())["a"], [True, False, True]
+    )
+    assert_array_equal(
+        df.select(st.col("a").lt(4.2).arr.any())["a"], [True, True, True]
+    )
+    assert_array_equal(df.select(st.col("a").arr.argmin())["a"], [0, 0, 2])
+    assert_array_equal(df.select(st.col("a").arr.argmax())["a"], [2, 2, 0])
+
+
+def test_namespace_arr_axis():
+    ar = [
+        [[1, 2, 3], [0, 0, 0]],
+        [[2, 4, 6], [1, 1, 1]],
+        [[3, 2, 1], [4, 4, 4]],
+    ]
+    df = st.array({"a": ar})
+    assert_array_equal(df.select(st.col("a").arr.min(axis=0))["a"], np.min(ar, axis=1))
+    assert_array_equal(df.select(st.col("a").arr.min(axis=1))["a"], np.min(ar, axis=2))
+    assert_array_equal(
+        df.select(st.col("a").arr.min(axis=(0,)))["a"], np.min(ar, axis=1)
+    )
+
+    assert_array_equal(
+        df.select(st.col("a").arr.argmin(axis=0))["a"], np.argmin(ar, axis=1)
+    )
+    assert_array_equal(
+        df.select(st.col("a").arr.argmin(axis=1))["a"], np.argmin(ar, axis=2)
+    )
+
+
+def test_namespace_str():
+    df = st.array({"a": ["ab", "bc", "Ab", "bAB"]})
+    assert_array_equal(
+        df.select(st.col("a").str.lower())["a"], ["ab", "bc", "ab", "bab"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.upper())["a"], ["AB", "BC", "AB", "BAB"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.title())["a"], ["Ab", "Bc", "Ab", "Bab"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.capitalize())["a"], ["Ab", "Bc", "Ab", "Bab"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.swapcase())["a"], ["AB", "BC", "aB", "Bab"]
+    )
+    assert_array_equal(df.select(st.col("a").str.len())["a"], [2, 2, 2, 3])
+    assert_array_equal(
+        df.select(st.col("a").str.center(5))["a"], ["  ab ", "  bc ", "  Ab ", " bAB "]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.ljust(5))["a"], ["ab   ", "bc   ", "Ab   ", "bAB  "]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.rjust(5))["a"], ["   ab", "   bc", "   Ab", "  bAB"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.zfill(5))["a"], ["000ab", "000bc", "000Ab", "00bAB"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.replace("b", "X"))["a"], ["aX", "Xc", "AX", "XAB"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.encode())["a"], [b"ab", b"bc", b"Ab", b"bAB"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.encode().str.decode())["a"], ["ab", "bc", "Ab", "bAB"]
+    )
+
+    # strip
+    df = st.array({"a": [" ab", "bc ", "A b", "bAB"]})
+    assert_array_equal(
+        df.select(st.col("a").str.strip())["a"], ["ab", "bc", "A b", "bAB"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.lstrip())["a"], ["ab", "bc ", "A b", "bAB"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.rstrip())["a"], [" ab", "bc", "A b", "bAB"]
+    )
+    assert_array_equal(
+        df.select(st.col("a").str.strip(" b"))["a"], ["a", "c", "A", "AB"]
+    )
+
+    # mod
+    df = st.array({"a": ["a %s", "b %s", "c %s", "d %s"]})
+    assert_array_equal(
+        df.select(st.col("a").str.mod("X"))["a"], ["a X", "b X", "c X", "d X"]
+    )
+
+    # count
+    df = st.array({"a": ["ab", "aab", "abb", "bbb"]})
+    assert_array_equal(df.select(st.col("a").str.count("b"))["a"], [1, 1, 2, 3])
+
+    # find
+    assert_array_equal(df.select(st.col("a").str.find("b"))["a"], [1, 2, 1, 0])
+    assert_array_equal(df.select(st.col("a").str.rfind("b"))["a"], [1, 2, 2, 2])
