@@ -163,6 +163,27 @@ def test_namespace_arr():
     assert_array_equal(df.select(st.col("a").arr.argmax())["a"], [2, 2, 0])
 
 
+def test_namespace_arr_axis():
+    ar = [
+        [[1, 2, 3], [0, 0, 0]],
+        [[2, 4, 6], [1, 1, 1]],
+        [[3, 2, 1], [4, 4, 4]],
+    ]
+    df = st.array({"a": ar})
+    assert_array_equal(df.select(st.col("a").arr.min(axis=0))["a"], np.min(ar, axis=1))
+    assert_array_equal(df.select(st.col("a").arr.min(axis=1))["a"], np.min(ar, axis=2))
+    assert_array_equal(
+        df.select(st.col("a").arr.min(axis=(0,)))["a"], np.min(ar, axis=1)
+    )
+
+    assert_array_equal(
+        df.select(st.col("a").arr.argmin(axis=0))["a"], np.argmin(ar, axis=1)
+    )
+    assert_array_equal(
+        df.select(st.col("a").arr.argmin(axis=1))["a"], np.argmin(ar, axis=2)
+    )
+
+
 def test_namespace_str():
     df = st.array({"a": ["ab", "bc", "Ab", "bAB"]})
     assert_array_equal(
@@ -223,3 +244,11 @@ def test_namespace_str():
     assert_array_equal(
         df.select(st.col("a").str.mod("X"))["a"], ["a X", "b X", "c X", "d X"]
     )
+
+    # count
+    df = st.array({"a": ["ab", "aab", "abb", "bbb"]})
+    assert_array_equal(df.select(st.col("a").str.count("b"))["a"], [1, 1, 2, 3])
+
+    # find
+    assert_array_equal(df.select(st.col("a").str.find("b"))["a"], [1, 2, 1, 0])
+    assert_array_equal(df.select(st.col("a").str.rfind("b"))["a"], [1, 2, 2, 2])

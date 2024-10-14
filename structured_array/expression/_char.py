@@ -90,16 +90,6 @@ class StrNamespace(ExprNamespace):
             self._op().compose(_uexp.UfuncExpr(np.char.rfind, sub, start, end))
         )
 
-    def index(self, sub: str, start: int = 0, end: int | None = None) -> Expr:
-        return self._new(
-            self._op().compose(_uexp.UfuncExpr(np.char.index, sub, start, end))
-        )
-
-    def rindex(self, sub: str, start: int = 0, end: int | None = None) -> Expr:
-        return self._new(
-            self._op().compose(_uexp.UfuncExpr(np.char.rindex, sub, start, end))
-        )
-
     def startswith(self, prefix: str, start: int = 0, end: int | None = None) -> Expr:
         return self._new(
             self._op().compose(_uexp.UfuncExpr(np.char.startswith, prefix, start, end))
