@@ -6,6 +6,7 @@ from typing import (
     Literal,
     Sequence,
     SupportsIndex,
+    TypeVar,
     overload,
     TYPE_CHECKING,
 )
@@ -19,6 +20,8 @@ from tabulate import tabulate
 if TYPE_CHECKING:
     from typing import Self
 
+_T = TypeVar("_T", bound="StructuredArray")
+
 
 class StructuredArray:
     def __init__(self, arr: np.ndarray) -> None:
@@ -29,7 +32,7 @@ class StructuredArray:
         """Create a new instance of the class."""
         return cls(arr)
 
-    def view(self, cls: type[Self]) -> Self:
+    def view(self, cls: type[_T]) -> _T:
         """View the structured array as another class."""
         if not isinstance(cls, type) or not issubclass(cls, StructuredArray):
             raise TypeError("cls must be a subclass of StructuredArray")
@@ -330,7 +333,7 @@ class StructuredArray:
                     return _slice_np_void(self._arr[cname], r)
                 return _slice_np_void(self._arr[r], c)
             else:
-                raise TypeError(f"Invalid key length: {len(key)}")
+                raise IndexError(f"Invalid key length: {len(key)}")
         else:
             raise TypeError(f"Invalid key type: {type(key)}")
 

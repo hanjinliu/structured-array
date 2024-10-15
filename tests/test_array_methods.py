@@ -24,6 +24,11 @@ def test_filter():
         "a": [2, 3],
         "b": [5, 6],
     }
+    assert df.filter().to_dict(asarray=False) == {"a": [1, 2, 3], "b": [4, 5, 6]}
+    assert df.filter(st.col("a") > 1, st.col("b") < 6).to_dict(asarray=False) == {
+        "a": [2],
+        "b": [5],
+    }
 
 
 def test_sort():
@@ -82,6 +87,11 @@ def test_getitem():
     assert df[1:3, 1:2].to_dict(asarray=False) == {"b": [5, 6]}
     assert df[["b", "a"]].to_dict(asarray=False) == {"b": [4, 5, 6], "a": [1, 2, 3]}
 
+    with pytest.raises(IndexError):
+        df[0, 0, 0]  # too many indices
+    with pytest.raises(TypeError):
+        df[1.1]
+
 
 def test_misc():
     df = st.array({"a": [1, 2, 3], "b": [4, 5, 6]})
@@ -89,6 +99,8 @@ def test_misc():
     assert "c" not in df
     assert len(df) == 3
     assert df.shape == (3, 2)
+    assert_allclose(df.to_dict()["a"], [1, 2, 3])
+    assert_allclose(df.to_dict()["b"], [4, 5, 6])
 
 
 def test_rename():
@@ -148,3 +160,13 @@ def test_unstructure():
         np.array([(1, 4), (2, 5), (3, 6)], dtype=np.float32),
     )
     st.array({}).to_unstructured()
+
+
+def test_subclass():
+    class MyArray(st.StructuredArray):
+        pass
+
+    df = st.array({"a": [1, 2, 3], "b": [3, 4, 5]}).view(MyArray)
+    assert isinstance(df, MyArray)
+    out = df.with_columns(st.arange())
+    assert isinstance(out, MyArray)
